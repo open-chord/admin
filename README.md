@@ -2,6 +2,10 @@
 
 React and TypeScript catalog studio for OpenChord.
 
+The smart album importer accepts a complete music folder, reads its embedded metadata,
+flags inconsistencies, lets the user review the proposed track list and asks the server
+to convert lossless sources to ALAC before catalog insertion.
+
 ```sh
 npm install
 npm run dev
