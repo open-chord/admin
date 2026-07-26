@@ -1,19 +1,23 @@
 import type { Album, ImportDraft, ImportResult, Track } from "./types";
 
+/** Decodes a JSON response and promotes the server error envelope to an exception. */
 async function parse<T>(response: Response): Promise<T> {
   const body = await response.json();
   if (!response.ok) throw new Error(body.message || "Что-то пошло не так");
   return body;
 }
 
+/** Fetches the complete catalog projection used by Studio. */
 export async function fetchCatalog(): Promise<Album[]> {
   return parse(await fetch("/api/admin/catalog"));
 }
 
+/** Uploads one track with its metadata, optional artwork, and lyrics. */
 export async function uploadTrack(form: FormData): Promise<Track> {
   return parse(await fetch("/api/admin/tracks", { method: "POST", body: form }));
 }
 
+/** Replaces the synchronized LRC document for one track. */
 export async function updateLyrics(id: string, lyrics: string): Promise<Track> {
   return parse(
     await fetch(`/api/admin/tracks/${id}/lyrics`, {
@@ -24,12 +28,14 @@ export async function updateLyrics(id: string, lyrics: string): Promise<Track> {
   );
 }
 
+/** Uploads a folder selection for non-destructive metadata analysis. */
 export async function analyzeAlbum(files: File[]): Promise<ImportDraft> {
   const body = new FormData();
   files.forEach((file) => body.append("files", file));
   return parse(await fetch("/api/admin/imports/analyze", { method: "POST", body }));
 }
 
+/** Commits an administrator-reviewed smart-import draft. */
 export async function commitAlbum(draft: ImportDraft): Promise<ImportResult> {
   return parse(
     await fetch(`/api/admin/imports/${draft.id}/commit`, {

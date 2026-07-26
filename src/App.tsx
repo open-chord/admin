@@ -22,22 +22,33 @@ import { DragEvent, FormEvent, useEffect, useMemo, useRef, useState } from "reac
 import { analyzeAlbum, commitAlbum, fetchCatalog, updateLyrics, uploadTrack } from "./api";
 import type { Album, ImportDraft, ImportResult, Track } from "./types";
 
+/** Top-level Studio destinations controlled without a routing dependency. */
 type View = "library" | "upload" | "album-import";
+/** Short-lived success or error message rendered above the current page. */
 type Notice = { text: string; error?: boolean } | null;
 
+/** Formats a millisecond duration as a compact minute:second label. */
 const duration = (ms: number) => {
   const seconds = Math.round(ms / 1000);
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 };
 
+/** Owns application-level navigation, catalog state, and modal coordination. */
 function App() {
+  /** Currently visible Studio workflow. */
   const [view, setView] = useState<View>("library");
+  /** Latest catalog snapshot returned by the server. */
   const [albums, setAlbums] = useState<Album[]>([]);
+  /** Initial and explicit catalog refresh state. */
   const [loading, setLoading] = useState(true);
+  /** Local library filter applied across artists, albums, and tracks. */
   const [query, setQuery] = useState("");
+  /** Auto-dismissing user feedback. */
   const [notice, setNotice] = useState<Notice>(null);
+  /** Track whose lyrics editor is currently presented. */
   const [editing, setEditing] = useState<Track | null>(null);
 
+  /** Reloads the server catalog while preserving errors as visible notices. */
   const refresh = async () => {
     try {
       setAlbums(await fetchCatalog());
@@ -55,6 +66,7 @@ function App() {
     return () => window.clearTimeout(timer);
   }, [notice]);
 
+  /** Filtered album projection that removes non-matching tracks from each card. */
   const visibleAlbums = useMemo(() => {
     const value = query.toLowerCase().trim();
     if (!value) return albums;
@@ -72,6 +84,7 @@ function App() {
   const withLyrics = tracks.filter((track) => track.lyricLines).length;
   const featured = albums.find((album) => album.hasArtwork) ?? albums[0];
 
+  /** Navigates between workflows and restores their expected top position. */
   const navigate = (next: View) => {
     setView(next);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -175,6 +188,7 @@ function App() {
   );
 }
 
+/** Persistent navigation and server-status rail. */
 function Sidebar({ view, navigate }: { view: View; navigate: (view: View) => void }) {
   return (
     <aside className="sidebar glass">
@@ -192,10 +206,12 @@ function Sidebar({ view, navigate }: { view: View; navigate: (view: View) => voi
   );
 }
 
+/** Compact catalog statistic used by the library hero. */
 function Metric({ value, label, icon, accent }: { value: number; label: string; icon: React.ReactNode; accent?: boolean }) {
   return <div className={`metric ${accent ? "accent" : ""}`}><span>{icon}</span><strong>{value}</strong><small>{label}</small></div>;
 }
 
+/** Album artwork, metadata, ordered tracks, and lyric-edit actions. */
 function AlbumCard({ album, onEdit }: { album: Album; onEdit: (track: Track) => void }) {
   return (
     <article className="album-card glass">
@@ -222,10 +238,12 @@ function AlbumCard({ album, onEdit }: { album: Album; onEdit: (track: Track) => 
   );
 }
 
+/** Empty-library call to action. */
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return <div className="empty glass"><span><Music2 /></span><h3>Библиотека пуста</h3><p>Добавь первый трек — он сразу появится в приложении.</p><button className="glass-button primary-action" onClick={onAdd}><Plus /> Добавить трек</button></div>;
 }
 
+/** Direct single-track upload workflow for manual metadata entry. */
 function UploadView({ onCancel, onUploaded }: { onCancel: () => void; onUploaded: (track: Track) => void }) {
   const [audio, setAudio] = useState<File | null>(null);
   const [artwork, setArtwork] = useState<File | null>(null);
@@ -235,6 +253,7 @@ function UploadView({ onCancel, onUploaded }: { onCancel: () => void; onUploaded
   const audioRef = useRef<HTMLInputElement>(null);
   const artworkRef = useRef<HTMLInputElement>(null);
 
+  /** Accepts an audio file and reads browser metadata before submission. */
   const chooseAudio = (file?: File) => {
     if (!file) return;
     setAudio(file);
@@ -246,6 +265,7 @@ function UploadView({ onCancel, onUploaded }: { onCancel: () => void; onUploaded
     };
   };
 
+  /** Builds the multipart request from controlled files and native form fields. */
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!audio || !durationMs) return setError("Выбери аудио и дождись определения длительности");
@@ -306,6 +326,7 @@ function UploadView({ onCancel, onUploaded }: { onCancel: () => void; onUploaded
   );
 }
 
+/** Two-phase folder analysis and album review workflow. */
 function AlbumImportView({
   onCancel,
   onImported,
@@ -318,6 +339,7 @@ function AlbumImportView({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  /** Sends a folder selection to the analysis endpoint. */
   const inspect = async (files: File[]) => {
     if (!files.length) return;
     setBusy(true);
@@ -331,11 +353,13 @@ function AlbumImportView({
     }
   };
 
+  /** Bridges browser drag-and-drop files into the shared inspection path. */
   const drop = (event: DragEvent<HTMLButtonElement>) => {
     event.preventDefault();
     void inspect([...event.dataTransfer.files]);
   };
 
+  /** Applies one review-table edit without mutating the existing draft. */
   const updateTrack = (index: number, field: "title" | "number" | "discNumber", value: string) => {
     if (!draft) return;
     const tracks = [...draft.tracks];
@@ -343,6 +367,7 @@ function AlbumImportView({
     setDraft({ ...draft, tracks });
   };
 
+  /** Persists the reviewed draft and reports the resulting album summary. */
   const commit = async () => {
     if (!draft) return;
     setBusy(true);
@@ -447,16 +472,19 @@ function AlbumImportView({
   );
 }
 
+/** Reusable single-file drag-and-drop control. */
 function DropField({ icon, title, hint, onClick, onDrop }: { icon: React.ReactNode; title: string; hint: string; onClick: () => void; onDrop: (file?: File) => void }) {
   const drop = (event: DragEvent<HTMLButtonElement>) => { event.preventDefault(); onDrop(event.dataTransfer.files[0]); };
   return <button className="drop-field" type="button" onClick={onClick} onDragOver={(event) => event.preventDefault()} onDrop={drop}><span>{icon}</span><strong>{title}</strong><small>{hint}</small><i>Выбрать файл <ArrowUp /></i></button>;
 }
 
+/** Consistent labeled input that also guards numeric fields from values below one. */
 function Field(props: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
   const { label, ...input } = props;
   return <label className="field"><span>{label}</span><input {...input} min={input.type === "number" ? 1 : input.min} /></label>;
 }
 
+/** Modal editor that replaces a track's complete synchronized lyric document. */
 function LyricsSheet({ track, onClose, onSaved }: { track: Track; onClose: () => void; onSaved: (track: Track) => void }) {
   const [value, setValue] = useState("");
   const [saving, setSaving] = useState(false);
