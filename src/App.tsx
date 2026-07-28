@@ -86,14 +86,13 @@ function App() {
 
       <main>
         <header className="topbar">
-          <div className="traffic-lights" aria-hidden="true"><i /><i /><i /></div>
           <div className="toolbar-title">
             {(view === "album" || view === "upload" || view === "album-import") && (
               <button className="toolbar-icon" onClick={() => navigate("albums")} aria-label="Назад"><ChevronRight /></button>
             )}
-            <strong>
-              {view === "albums" ? "Альбомы" : view === "tracks" ? "Все треки" : view === "lyrics" ? "Lyrics" : view === "album" ? selectedAlbum?.title : view === "album-import" ? "Импорт альбома" : "Новый трек"}
-            </strong>
+            {(view === "albums" || view === "tracks" || view === "lyrics") && (
+              <strong>{view === "albums" ? "Альбомы" : view === "tracks" ? "Все треки" : "Lyrics"}</strong>
+            )}
           </div>
           <div className="toolbar-actions">
             {(view === "albums" || view === "tracks" || view === "lyrics") && (
@@ -177,10 +176,7 @@ function App() {
 function Sidebar({ view, navigate }: { view: View; navigate: (view: View) => void }) {
   return (
     <aside className="sidebar glass">
-      <button className="wordmark" onClick={() => navigate("albums")} aria-label="OpenChord Studio">
-        <span className="mark"><Music2 /></span>
-        <span>OpenChord<small>Studio</small></span>
-      </button>
+      <div className="traffic-lights" aria-hidden="true"><i /><i /><i /></div>
       <nav>
         <span className="nav-label">Коллекция</span>
         <button className={view === "albums" || view === "album" ? "active" : ""} onClick={() => navigate("albums")}><Music2 /> <span>Альбомы</span></button>

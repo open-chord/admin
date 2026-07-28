@@ -256,10 +256,8 @@ h3 { font-size: 23px; letter-spacing: -.035em; margin: 7px 0 0; }
   background: rgba(22,22,24,.92);
   border-width: 0 1px 0 0;
 }
-.wordmark { padding: 3px 8px; }
-.mark { width: 32px; height: 32px; border-radius: 9px; }
-.mark svg { width: 17px; }
-nav { margin-top: 34px; gap: 3px; }
+.sidebar > .traffic-lights { margin: 2px 7px 0; }
+nav { margin-top: 48px; gap: 3px; }
 .nav-label { padding: 12px 11px 5px; color: var(--tertiary); text-transform: uppercase; letter-spacing: .13em; font-size: 9px; font-weight: 700; }
 nav button { height: 34px; border-radius: 8px; font-size: 13px; }
 nav button svg { width: 16px; }
@@ -279,13 +277,13 @@ main { margin-left: 220px; padding: 0 28px 60px; max-width: none; }
   background: rgba(4,4,5,.82);
   backdrop-filter: blur(28px);
 }
-.traffic-lights { display: flex; gap: 7px; margin-right: 14px; }
+.traffic-lights { display: flex; gap: 7px; }
 .traffic-lights i { width: 11px; height: 11px; border-radius: 50%; background: #ff5f57; }
 .traffic-lights i:nth-child(2) { background: #febc2e; }
 .traffic-lights i:nth-child(3) { background: #28c840; }
 .toolbar-title { margin-right: auto; display: flex; align-items: center; gap: 8px; min-width: 0; }
 .toolbar-title strong { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.toolbar-icon { width: 30px; height: 30px; padding: 0; border: 0; border-radius: 8px; background: rgba(255,255,255,.07); display: grid; place-items: center; cursor: pointer; }
+.toolbar-icon { width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.07); display: grid; place-items: center; cursor: pointer; }
 .toolbar-icon svg { width: 15px; transform: rotate(180deg); }
 .toolbar-actions { display: flex; align-items: center; gap: 7px; }
 .toolbar-search { width: 225px; height: 32px; padding: 0 10px; display: flex; align-items: center; gap: 7px; border-radius: 9px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.08); color: var(--secondary); }
@@ -342,7 +340,7 @@ main { margin-left: 220px; padding: 0 28px 60px; max-width: none; }
   .sidebar { inset: auto 12px 12px; width: calc(100% - 24px); height: 60px; border-radius: 18px; border: 1px solid var(--stroke); }
   main { margin-left: 0; padding: 0 16px 90px; }
   .topbar { margin: 0 -16px; padding: 0 16px; }
-  .traffic-lights { display: none; }
+  .sidebar > .traffic-lights { display: none; }
   .toolbar-button { width: 32px; padding: 0; justify-content: center; }
   .toolbar-button { font-size: 0; }
   .toolbar-search { width: min(220px, 32vw); }
