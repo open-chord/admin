@@ -1,5 +1,16 @@
 # OpenChord Admin
 
+OpenChord Studio manages a self-hosted OpenChord library. Alongside individual
+track and album import workflows, the **OpenChord Archive** section supports:
+
+- one-click streaming export of the complete library;
+- self-contained export of a selected playlist;
+- validated import of `.openchord` draft `0.1` archives;
+- a committed import summary with imported and skipped entity counts.
+
+Archive bytes are downloaded directly by the browser rather than buffered in
+application state.
+
 React and TypeScript catalog studio for OpenChord.
 
 The smart album importer accepts a complete music folder, reads its embedded metadata,
