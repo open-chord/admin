@@ -1,4 +1,11 @@
-import type { Album, ImportDraft, ImportResult, Track } from "./types";
+import type {
+  Album,
+  ArchiveImportResult,
+  ArchivePlaylist,
+  ImportDraft,
+  ImportResult,
+  Track,
+} from "./types";
 
 async function parse<T>(response: Response): Promise<T> {
   const body = await response.json();
@@ -80,6 +87,36 @@ export async function commitAlbum(draft: ImportDraft): Promise<ImportResult> {
           sourceFormat: track.sourceFormat,
         })),
       }),
+    }),
+  );
+}
+
+/** Returns playlists that can be exported as self-contained archives. */
+export async function fetchArchivePlaylists(): Promise<ArchivePlaylist[]> {
+  return parse(await fetch("/api/admin/openchord/playlists"));
+}
+
+/** Starts a browser download without buffering the archive in JavaScript. */
+export function downloadOpenChordArchive(playlistId?: string): void {
+  const query = playlistId
+    ? `scope=playlist&playlistId=${encodeURIComponent(playlistId)}`
+    : "scope=library";
+  const link = document.createElement("a");
+  link.href = `/api/admin/openchord/export?${query}`;
+  link.download = "";
+  document.body.append(link);
+  link.click();
+  link.remove();
+}
+
+/** Uploads and commits one portable OpenChord archive. */
+export async function importOpenChordArchive(file: File): Promise<ArchiveImportResult> {
+  const body = new FormData();
+  body.append("archive", file);
+  return parse(
+    await fetch("/api/admin/openchord/import", {
+      method: "POST",
+      body,
     }),
   );
 }
