@@ -7,7 +7,6 @@ import {
   FileAudio,
   FolderUp,
   ImagePlus,
-  Library,
   ListMusic,
   Music2,
   PencilLine,
@@ -22,7 +21,7 @@ import { DragEvent, FormEvent, useEffect, useMemo, useRef, useState } from "reac
 import { analyzeAlbum, commitAlbum, fetchCatalog, updateLyrics, uploadTrack } from "./api";
 import type { Album, ImportDraft, ImportResult, Track } from "./types";
 
-type View = "library" | "upload" | "album-import";
+type View = "albums" | "tracks" | "lyrics" | "album" | "upload" | "album-import";
 type Notice = { text: string; error?: boolean } | null;
 
 const duration = (ms: number) => {
@@ -31,7 +30,7 @@ const duration = (ms: number) => {
 };
 
 function App() {
-  const [view, setView] = useState<View>("library");
+  const [view, setView] = useState<View>("albums");
   const [albums, setAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -69,11 +68,8 @@ function App() {
       .filter((album) => album.tracks.length);
   }, [albums, query]);
 
-  const tracks = albums.flatMap((album) => album.tracks);
-  const withLyrics = tracks.filter((track) => track.lyricLines).length;
   const featured = albums.find((album) => album.hasArtwork) ?? albums[0];
-  const selectedAlbum = visibleAlbums.find((album) => album.id === selectedAlbumId)
-    ?? [...visibleAlbums].sort((left, right) => right.tracks.length - left.tracks.length)[0];
+  const selectedAlbum = albums.find((album) => album.id === selectedAlbumId);
 
   const navigate = (next: View) => {
     setView(next);
@@ -90,78 +86,70 @@ function App() {
 
       <main>
         <header className="topbar">
-          <div>
-            <span className="context-label">{view === "library" ? "OpenChord Studio" : "Импорт музыки"}</span>
-            <h1>{view === "library" ? "Библиотека" : view === "album-import" ? "Импорт альбома" : "Добавить музыку"}</h1>
+          <div className="traffic-lights" aria-hidden="true"><i /><i /><i /></div>
+          <div className="toolbar-title">
+            {(view === "album" || view === "upload" || view === "album-import") && (
+              <button className="toolbar-icon" onClick={() => navigate("albums")} aria-label="Назад"><ChevronRight /></button>
+            )}
+            <strong>
+              {view === "albums" ? "Альбомы" : view === "tracks" ? "Все треки" : view === "lyrics" ? "Lyrics" : view === "album" ? selectedAlbum?.title : view === "album-import" ? "Импорт альбома" : "Новый трек"}
+            </strong>
           </div>
-          {view === "library" && (
-            <button className="glass-button primary-action" onClick={() => navigate("upload")}>
-              <Plus size={17} /> Новый трек
+          <div className="toolbar-actions">
+            {(view === "albums" || view === "tracks" || view === "lyrics") && (
+              <label className="toolbar-search">
+                <Search />
+                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Поиск в коллекции" />
+              </label>
+            )}
+            <button className="toolbar-button" onClick={() => navigate("album-import")}><FolderUp /> Импорт альбома</button>
+            <button className="toolbar-button primary" onClick={() => navigate("upload")}>
+              <Plus /> Добавить трек
             </button>
-          )}
+          </div>
         </header>
 
-        {view === "library" ? (
-          <section className="page-enter">
-            <div className="library-summary glass">
-              <div className="summary-copy">
-                <span className="overline">Твоя коллекция</span>
-                <h2>Вся музыка — под рукой.</h2>
-                <p>Релизы, обложки и синхронизированные тексты.</p>
-              </div>
-              <div className="hero-metrics">
-                <Metric value={albums.length} label="альбомов" icon={<Disc3 />} />
-                <Metric value={tracks.length} label="треков" icon={<Music2 />} />
-                <Metric value={withLyrics} label="с lyrics" icon={<ListMusic />} accent />
-              </div>
-            </div>
-
-            <div className="section-heading">
-              <div>
-                <span className="overline">Каталог</span>
-                <h3>Все релизы</h3>
-              </div>
-              <label className="search-field glass">
-                <Search size={16} />
-                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Найти музыку" />
-              </label>
-            </div>
-
+        {view === "albums" ? (
+          <section className="collection-page page-enter">
+            <div className="collection-heading"><h1>Альбомы</h1><span>{albums.length} релизов</span></div>
             {loading ? (
               <div className="catalog-grid">{[1, 2, 3].map((key) => <div className="album-card skeleton" key={key} />)}</div>
             ) : albums.length === 0 ? (
               <EmptyState onAdd={() => navigate("upload")} />
             ) : (
-              <div className="catalog-workspace">
-                <div className="catalog-grid">
-                  {visibleAlbums.map((album) => (
-                    <AlbumCard
-                      key={album.id}
-                      album={album}
-                      selected={album.id === selectedAlbum?.id}
-                      onSelect={() => setSelectedAlbumId(album.id)}
-                    />
-                  ))}
-                </div>
-                {selectedAlbum && <AlbumDetail album={selectedAlbum} onEdit={setEditing} />}
+              <div className="catalog-grid">
+                {visibleAlbums.map((album) => (
+                  <AlbumCard
+                    key={album.id}
+                    album={album}
+                    onSelect={() => {
+                      setSelectedAlbumId(album.id);
+                      navigate("album");
+                    }}
+                  />
+                ))}
               </div>
             )}
           </section>
+        ) : view === "album" && selectedAlbum ? (
+          <AlbumDetail album={selectedAlbum} onEdit={setEditing} onAddTrack={() => navigate("upload")} />
+        ) : view === "tracks" || view === "lyrics" ? (
+          <TrackCollection albums={visibleAlbums} lyricsOnly={view === "lyrics"} onEdit={setEditing} />
         ) : view === "upload" ? (
           <UploadView
-            onCancel={() => navigate("library")}
+            onCancel={() => navigate(selectedAlbum ? "album" : "albums")}
             onUploaded={async (track) => {
               await refresh();
-              navigate("library");
+              navigate(selectedAlbum ? "album" : "albums");
               setNotice({ text: `«${track.title}» добавлен в библиотеку` });
             }}
           />
         ) : (
           <AlbumImportView
-            onCancel={() => navigate("library")}
+            onCancel={() => navigate("albums")}
             onImported={async (result) => {
               await refresh();
-              navigate("library");
+              navigate("albums");
               setNotice({
                 text: `«${result.album}» импортирован · ${result.importedTracks} треков${result.transcodedTracks ? ` · ${result.transcodedTracks} в ALAC` : ""}`,
               });
@@ -189,27 +177,24 @@ function App() {
 function Sidebar({ view, navigate }: { view: View; navigate: (view: View) => void }) {
   return (
     <aside className="sidebar glass">
-      <button className="wordmark" onClick={() => navigate("library")} aria-label="OpenChord Studio">
+      <button className="wordmark" onClick={() => navigate("albums")} aria-label="OpenChord Studio">
         <span className="mark"><Music2 /></span>
         <span>OpenChord<small>Studio</small></span>
       </button>
       <nav>
-        <button className={view === "library" ? "active" : ""} onClick={() => navigate("library")}><Library /> <span>Библиотека</span></button>
-        <button className={view === "album-import" ? "active" : ""} onClick={() => navigate("album-import")}><FolderUp /> <span>Импорт альбома</span></button>
-        <button className={view === "upload" ? "active" : ""} onClick={() => navigate("upload")}><Plus /> <span>Один трек</span></button>
+        <span className="nav-label">Коллекция</span>
+        <button className={view === "albums" || view === "album" ? "active" : ""} onClick={() => navigate("albums")}><Music2 /> <span>Альбомы</span></button>
+        <button className={view === "tracks" ? "active" : ""} onClick={() => navigate("tracks")}><ListMusic /> <span>Треки</span></button>
+        <button className={view === "lyrics" ? "active" : ""} onClick={() => navigate("lyrics")}><Sparkles /> <span>Lyrics</span></button>
       </nav>
       <div className="server-state"><i /><span>OpenChord Server<small>{location.host}</small></span></div>
     </aside>
   );
 }
 
-function Metric({ value, label, icon, accent }: { value: number; label: string; icon: React.ReactNode; accent?: boolean }) {
-  return <div className={`metric ${accent ? "accent" : ""}`}><span>{icon}</span><strong>{value}</strong><small>{label}</small></div>;
-}
-
-function AlbumCard({ album, selected, onSelect }: { album: Album; selected: boolean; onSelect: () => void }) {
+function AlbumCard({ album, onSelect }: { album: Album; onSelect: () => void }) {
   return (
-    <button className={`album-card glass ${selected ? "selected" : ""}`} type="button" onClick={onSelect}>
+    <button className="album-card" type="button" onClick={onSelect}>
       <div className="album-art">
         {album.hasArtwork ? <img src={`/media/artwork/${album.id}`} alt="" /> : <div className="art-fallback"><Music2 /></div>}
         <span>{album.year}</span>
@@ -226,20 +211,25 @@ function AlbumCard({ album, selected, onSelect }: { album: Album; selected: bool
   );
 }
 
-function AlbumDetail({ album, onEdit }: { album: Album; onEdit: (track: Track) => void }) {
+function AlbumDetail({ album, onEdit, onAddTrack }: { album: Album; onEdit: (track: Track) => void; onAddTrack: () => void }) {
   return (
-    <aside className="album-detail glass">
-      <header>
-        <div className="detail-art">
+    <section className="album-page page-enter">
+      <header className="album-page-header">
+        <div className="album-page-art">
           {album.hasArtwork ? <img src={`/media/artwork/${album.id}`} alt="" /> : <div className="art-fallback"><Music2 /></div>}
         </div>
-        <div>
-          <span className="overline">{album.year} · {album.tracks.length} треков</span>
-          <h3>{album.title}</h3>
+        <div className="album-page-copy">
+          <span className="overline">Альбом · {album.year}</span>
+          <h1>{album.title}</h1>
           <p>{album.artist}</p>
+          <span>{album.tracks.length} треков · {duration(album.tracks.reduce((sum, track) => sum + track.durationMs, 0))}</span>
+          <div className="album-page-actions">
+            <button className="toolbar-button primary" onClick={onAddTrack}><Plus /> Добавить трек</button>
+            <button className="toolbar-button" disabled title="Требуется API редактирования альбома"><PencilLine /> Метаданные · TODO</button>
+          </div>
         </div>
       </header>
-      <div className="detail-tracks">
+      <div className="album-track-table">
         {album.tracks.map((track) => (
           <div className="track" key={track.id}>
             <span className="track-index">{String(track.number).padStart(2, "0")}</span>
@@ -250,7 +240,28 @@ function AlbumDetail({ album, onEdit }: { album: Album; onEdit: (track: Track) =
           </div>
         ))}
       </div>
-    </aside>
+    </section>
+  );
+}
+
+function TrackCollection({ albums, lyricsOnly, onEdit }: { albums: Album[]; lyricsOnly: boolean; onEdit: (track: Track) => void }) {
+  const rows = albums.flatMap((album) => album.tracks.map((track) => ({ album, track })))
+    .filter(({ track }) => !lyricsOnly || track.lyricLines);
+  return (
+    <section className="collection-page page-enter">
+      <div className="collection-heading"><h1>{lyricsOnly ? "Lyrics" : "Все треки"}</h1><span>{rows.length} позиций</span></div>
+      <div className="track-collection">
+        {rows.map(({ album, track }) => (
+          <div className="collection-row" key={track.id}>
+            <span className="track-index">{String(track.number).padStart(2, "0")}</span>
+            <div><strong>{track.title}</strong><small>{album.artist}</small></div>
+            <span>{album.title}</span>
+            <span>{duration(track.durationMs)}</span>
+            <button onClick={() => onEdit(track)}><PencilLine /></button>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
