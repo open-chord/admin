@@ -62,27 +62,45 @@ h3 { font-size: 23px; letter-spacing: -.035em; margin: 7px 0 0; }
 .hero-panel::before { content: ""; position: absolute; width: 360px; height: 360px; border-radius: 50%; right: -80px; top: -180px; background: rgba(255,255,255,.12); filter: blur(20px); }
 .hero-copy { position: relative; max-width: 580px; }
 .hero-copy p { max-width: 600px; color: var(--secondary); font-size: 15px; line-height: 1.55; margin-bottom: 0; }
+.library-summary { min-height: 132px; border-radius: 22px; padding: 23px 26px; display: flex; align-items: center; justify-content: space-between; gap: 28px; }
+.summary-copy h2 { font-size: clamp(25px, 2.2vw, 34px); margin: 7px 0 5px; }
+.summary-copy p { color: var(--secondary); font-size: 14px; margin: 0; }
 .hero-metrics { display: flex; gap: 9px; position: relative; }
-.metric { width: 92px; height: 96px; padding: 12px; border-radius: 17px; background: rgba(0,0,0,.28); border: 1px solid rgba(255,255,255,.09); display: flex; flex-direction: column; justify-content: space-between; }
+.metric { width: 88px; height: 84px; padding: 10px 11px; border-radius: 16px; background: rgba(0,0,0,.28); border: 1px solid rgba(255,255,255,.09); display: grid; grid-template-columns: 1fr auto; align-content: space-between; }
 .metric > span { color: var(--secondary); }
 .metric svg { width: 17px; }
-.metric strong { font-size: 25px; letter-spacing: -.05em; }
-.metric small { color: var(--secondary); font-size: 11px; }
+.metric strong { font-size: 23px; letter-spacing: -.05em; grid-column: 1 / -1; }
+.metric small { color: var(--secondary); font-size: 10px; grid-column: 1 / -1; }
 .metric.accent { background: var(--accent); color: #0b0b08; border-color: rgba(255,255,255,.5); }
 .metric.accent small, .metric.accent > span { color: rgba(0,0,0,.6); }
 .section-heading { display: flex; justify-content: space-between; align-items: end; margin: 27px 2px 14px; }
 .search-field { width: 260px; height: 40px; border-radius: 13px; display: flex; align-items: center; gap: 9px; padding: 0 13px; color: var(--secondary); }
 .search-field input { width: 100%; background: transparent; border: 0; outline: 0; color: white; font-size: 13px; }
-.catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; align-items: start; }
-.album-card { border-radius: 20px; overflow: hidden; padding: 9px; min-width: 0; }
-.album-art { aspect-ratio: 1.72; border-radius: 14px; overflow: hidden; position: relative; background: #17171a; }
+.catalog-workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 390px); gap: 16px; align-items: start; }
+.catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; align-items: start; }
+.album-card { width: 100%; border-radius: 20px; overflow: hidden; padding: 9px; min-width: 0; color: white; text-align: left; cursor: pointer; transition: border-color .2s ease, background .2s ease, transform .2s ease; }
+.album-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,.24); }
+.album-card.selected { border-color: rgba(228,255,87,.58); background: linear-gradient(145deg, rgba(228,255,87,.105), rgba(255,255,255,.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 0 0 1px rgba(228,255,87,.08); }
+.album-art { aspect-ratio: 4 / 3; border-radius: 14px; overflow: hidden; position: relative; background: #17171a; }
 .album-art img { width: 100%; height: 100%; object-fit: cover; }
 .album-art > span { position: absolute; top: 9px; right: 9px; border-radius: 20px; padding: 5px 8px; background: rgba(0,0,0,.52); backdrop-filter: blur(14px); font-size: 10px; }
 .art-fallback { width: 100%; height: 100%; display: grid; place-items: center; background: radial-gradient(circle at 30% 30%, #575066, #17171a 65%); }
 .art-fallback svg { width: 36px; color: rgba(255,255,255,.7); }
-.album-info { padding: 12px 6px 10px; }
-.album-info h4 { margin-bottom: 4px; font-size: 16px; line-height: 1.25; }
-.album-info p { color: var(--secondary); font-size: 13px; margin-bottom: 0; }
+.album-info { height: 67px; padding: 11px 6px 8px; }
+.album-info h4 { margin-bottom: 3px; font-size: 16px; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.album-info p { color: var(--secondary); font-size: 13px; margin-bottom: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.album-meta { height: 38px; padding: 0 6px; border-top: 1px solid rgba(255,255,255,.08); display: flex; align-items: center; justify-content: space-between; color: var(--secondary); font-size: 11px; }
+.album-meta span { display: flex; align-items: center; gap: 6px; }
+.album-meta svg { width: 14px; }
+.album-meta > svg { transition: transform .2s ease; }
+.album-card:hover .album-meta > svg, .album-card.selected .album-meta > svg { color: var(--accent); transform: translateX(2px); }
+.album-detail { position: sticky; top: 24px; border-radius: 22px; overflow: hidden; }
+.album-detail > header { padding: 14px; display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: center; gap: 15px; border-bottom: 1px solid rgba(255,255,255,.09); }
+.detail-art { aspect-ratio: 4 / 3; border-radius: 13px; overflow: hidden; background: #17171a; }
+.detail-art img { width: 100%; height: 100%; object-fit: cover; }
+.album-detail h3 { font-size: 20px; margin: 6px 0 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.album-detail header p { color: var(--secondary); font-size: 12px; margin: 0; }
+.detail-tracks { max-height: calc(100vh - 235px); overflow-y: auto; padding: 5px 9px 8px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.18) transparent; }
 .track-list { border-top: 1px solid rgba(255,255,255,.08); }
 .track { min-height: 48px; display: grid; grid-template-columns: 25px minmax(0, 1fr) auto; gap: 7px; align-items: center; padding: 5px 5px; border-bottom: 1px solid rgba(255,255,255,.055); }
 .track:last-child { border-bottom: 0; }
@@ -94,10 +112,6 @@ h3 { font-size: 23px; letter-spacing: -.035em; margin: 7px 0 0; }
 .track button svg { width: 14px; }
 .lyrics-ready { color: var(--accent); display: flex; align-items: center; gap: 3px; font-size: 10px; }
 .lyrics-ready svg { width: 9px !important; }
-.track-list-toggle { width: 100%; height: 38px; padding: 0 7px; border: 0; background: transparent; color: var(--secondary); display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 12px; font-weight: 600; }
-.track-list-toggle:hover { color: white; }
-.track-list-toggle svg { width: 15px; transition: transform .2s ease; }
-.track-list-toggle svg.expanded { transform: rotate(-90deg); }
 .skeleton { min-height: 390px; background: linear-gradient(100deg, rgba(255,255,255,.03) 20%, rgba(255,255,255,.09) 40%, rgba(255,255,255,.03) 60%); background-size: 300% 100%; animation: shimmer 1.5s infinite; }
 @keyframes shimmer { to { background-position: -150% 0; } }
 .page-enter { animation: enter .45s cubic-bezier(.22,.8,.3,1); }
@@ -106,7 +120,7 @@ h3 { font-size: 23px; letter-spacing: -.035em; margin: 7px 0 0; }
 .empty > span { width: 58px; height: 58px; border-radius: 18px; background: rgba(255,255,255,.12); display: grid; place-items: center; }
 .empty h3 { margin: 20px 0 8px; }
 .empty p { color: var(--secondary); font-size: 11px; margin-bottom: 22px; }
-.upload-card { border-radius: 28px; overflow: hidden; max-width: 1100px; }
+.upload-card { border-radius: 28px; overflow: hidden; width: 100%; max-width: 1280px; }
 .upload-lead { padding: 28px 32px 24px; display: flex; align-items: center; gap: 18px; border-bottom: 1px solid rgba(255,255,255,.09); }
 .upload-lead h2 { font-size: 32px; margin: 7px 0; }
 .upload-lead p { color: var(--secondary); font-size: 13px; margin: 0; }
@@ -156,7 +170,7 @@ h3 { font-size: 23px; letter-spacing: -.035em; margin: 7px 0 0; }
 .notice.error svg { color: #ff7777; }
 @keyframes notice-in { from { opacity: 0; transform: translateY(12px); } }
 
-.smart-import, .review-card { max-width: 1080px; border-radius: 28px; overflow: hidden; }
+.smart-import, .review-card { width: 100%; max-width: 1280px; border-radius: 28px; overflow: hidden; }
 .import-intro, .review-head { padding: 28px 32px 24px; display: flex; align-items: center; gap: 18px; border-bottom: 1px solid rgba(255,255,255,.09); }
 .import-intro h2, .review-head h2 { font-size: 32px; margin: 7px 0; }
 .import-intro p, .review-head p { color: var(--secondary); font-size: 13px; margin: 0; }
@@ -189,6 +203,12 @@ h3 { font-size: 23px; letter-spacing: -.035em; margin: 7px 0 0; }
 .format-pill, .result-pill { justify-self: start; border-radius: 999px; padding: 6px 9px; background: rgba(255,255,255,.07); color: var(--secondary); font-size: 9px; }
 .result-pill.alac { color: var(--accent); background: rgba(228,255,87,.08); }
 
+@media (max-width: 1100px) {
+  .catalog-workspace { grid-template-columns: 1fr; }
+  .album-detail { position: static; }
+  .detail-tracks { max-height: 430px; }
+}
+
 @media (max-width: 900px) {
   .sidebar { inset: auto 12px 12px; width: calc(100% - 24px); height: 66px; flex-direction: row; align-items: center; justify-content: center; padding: 8px; border-radius: 22px; }
   .wordmark, .server-state { display: none; }
@@ -196,6 +216,7 @@ h3 { font-size: 23px; letter-spacing: -.035em; margin: 7px 0 0; }
   nav button { height: 48px; padding: 0 18px; }
   main { margin-left: 0; padding: 30px 18px 100px; }
   .hero-panel { flex-direction: column; align-items: stretch; }
+  .library-summary { align-items: flex-start; }
   .hero-metrics { align-self: flex-end; }
   .upload-layout { grid-template-columns: 1fr; }
   .secondary-column { border-left: 0; border-top: 1px solid rgba(255,255,255,.09); }
@@ -205,12 +226,14 @@ h3 { font-size: 23px; letter-spacing: -.035em; margin: 7px 0 0; }
 @media (max-width: 560px) {
   .topbar .primary-action { display: none; }
   .hero-panel { padding: 28px 22px; border-radius: 27px; }
-  .hero-metrics { width: 100%; }
+  .library-summary { padding: 20px; flex-direction: column; }
+  .hero-metrics { width: 100%; align-self: stretch; }
   .metric { width: auto; flex: 1; height: 108px; padding: 12px; }
   .metric strong { font-size: 24px; }
   .section-heading { align-items: stretch; flex-direction: column; gap: 17px; }
   .search-field { width: 100%; }
   .catalog-grid { grid-template-columns: 1fr; }
+  .album-detail > header { grid-template-columns: 92px minmax(0, 1fr); }
   .upload-lead, .form-stack, .form-footer { padding-left: 21px; padding-right: 21px; }
   .upload-symbol { display: none; }
   .field-pair { grid-template-columns: 1fr; }

@@ -37,6 +37,7 @@ function App() {
   const [query, setQuery] = useState("");
   const [notice, setNotice] = useState<Notice>(null);
   const [editing, setEditing] = useState<Track | null>(null);
+  const [selectedAlbumId, setSelectedAlbumId] = useState("");
 
   const refresh = async () => {
     try {
@@ -71,6 +72,8 @@ function App() {
   const tracks = albums.flatMap((album) => album.tracks);
   const withLyrics = tracks.filter((track) => track.lyricLines).length;
   const featured = albums.find((album) => album.hasArtwork) ?? albums[0];
+  const selectedAlbum = visibleAlbums.find((album) => album.id === selectedAlbumId)
+    ?? [...visibleAlbums].sort((left, right) => right.tracks.length - left.tracks.length)[0];
 
   const navigate = (next: View) => {
     setView(next);
@@ -100,11 +103,11 @@ function App() {
 
         {view === "library" ? (
           <section className="page-enter">
-            <div className="hero-panel glass">
-              <div className="hero-copy">
+            <div className="library-summary glass">
+              <div className="summary-copy">
                 <span className="overline">Твоя коллекция</span>
-                <h2>Музыка, которая<br />всегда с тобой.</h2>
-                <p>Управляй релизами, обложками и синхронизированными текстами в одном месте.</p>
+                <h2>Вся музыка — под рукой.</h2>
+                <p>Релизы, обложки и синхронизированные тексты.</p>
               </div>
               <div className="hero-metrics">
                 <Metric value={albums.length} label="альбомов" icon={<Disc3 />} />
@@ -129,10 +132,18 @@ function App() {
             ) : albums.length === 0 ? (
               <EmptyState onAdd={() => navigate("upload")} />
             ) : (
-              <div className="catalog-grid">
-                {visibleAlbums.map((album) => (
-                  <AlbumCard key={album.id} album={album} onEdit={setEditing} />
-                ))}
+              <div className="catalog-workspace">
+                <div className="catalog-grid">
+                  {visibleAlbums.map((album) => (
+                    <AlbumCard
+                      key={album.id}
+                      album={album}
+                      selected={album.id === selectedAlbum?.id}
+                      onSelect={() => setSelectedAlbumId(album.id)}
+                    />
+                  ))}
+                </div>
+                {selectedAlbum && <AlbumDetail album={selectedAlbum} onEdit={setEditing} />}
               </div>
             )}
           </section>
@@ -196,13 +207,9 @@ function Metric({ value, label, icon, accent }: { value: number; label: string; 
   return <div className={`metric ${accent ? "accent" : ""}`}><span>{icon}</span><strong>{value}</strong><small>{label}</small></div>;
 }
 
-function AlbumCard({ album, onEdit }: { album: Album; onEdit: (track: Track) => void }) {
-  const [expanded, setExpanded] = useState(false);
-  const visibleTracks = expanded ? album.tracks : album.tracks.slice(0, 3);
-  const hiddenTracks = album.tracks.length - visibleTracks.length;
-
+function AlbumCard({ album, selected, onSelect }: { album: Album; selected: boolean; onSelect: () => void }) {
   return (
-    <article className="album-card glass">
+    <button className={`album-card glass ${selected ? "selected" : ""}`} type="button" onClick={onSelect}>
       <div className="album-art">
         {album.hasArtwork ? <img src={`/media/artwork/${album.id}`} alt="" /> : <div className="art-fallback"><Music2 /></div>}
         <span>{album.year}</span>
@@ -211,8 +218,29 @@ function AlbumCard({ album, onEdit }: { album: Album; onEdit: (track: Track) => 
         <h4>{album.title}</h4>
         <p>{album.artist}</p>
       </div>
-      <div className="track-list">
-        {visibleTracks.map((track) => (
+      <div className="album-meta">
+        <span><ListMusic /> {album.tracks.length} треков</span>
+        <ChevronRight />
+      </div>
+    </button>
+  );
+}
+
+function AlbumDetail({ album, onEdit }: { album: Album; onEdit: (track: Track) => void }) {
+  return (
+    <aside className="album-detail glass">
+      <header>
+        <div className="detail-art">
+          {album.hasArtwork ? <img src={`/media/artwork/${album.id}`} alt="" /> : <div className="art-fallback"><Music2 /></div>}
+        </div>
+        <div>
+          <span className="overline">{album.year} · {album.tracks.length} треков</span>
+          <h3>{album.title}</h3>
+          <p>{album.artist}</p>
+        </div>
+      </header>
+      <div className="detail-tracks">
+        {album.tracks.map((track) => (
           <div className="track" key={track.id}>
             <span className="track-index">{String(track.number).padStart(2, "0")}</span>
             <div><strong>{track.title}</strong><small>{duration(track.durationMs)}</small></div>
@@ -221,14 +249,8 @@ function AlbumCard({ album, onEdit }: { album: Album; onEdit: (track: Track) => 
             </button>
           </div>
         ))}
-        {album.tracks.length > 3 && (
-          <button className="track-list-toggle" type="button" onClick={() => setExpanded((value) => !value)}>
-            <span>{expanded ? "Свернуть" : `Ещё ${hiddenTracks} ${hiddenTracks === 1 ? "трек" : "треков"}`}</span>
-            <ChevronRight className={expanded ? "expanded" : ""} />
-          </button>
-        )}
       </div>
-    </article>
+    </aside>
   );
 }
 
