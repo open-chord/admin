@@ -197,6 +197,10 @@ function Metric({ value, label, icon, accent }: { value: number; label: string; 
 }
 
 function AlbumCard({ album, onEdit }: { album: Album; onEdit: (track: Track) => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const visibleTracks = expanded ? album.tracks : album.tracks.slice(0, 3);
+  const hiddenTracks = album.tracks.length - visibleTracks.length;
+
   return (
     <article className="album-card glass">
       <div className="album-art">
@@ -208,7 +212,7 @@ function AlbumCard({ album, onEdit }: { album: Album; onEdit: (track: Track) => 
         <p>{album.artist}</p>
       </div>
       <div className="track-list">
-        {album.tracks.map((track) => (
+        {visibleTracks.map((track) => (
           <div className="track" key={track.id}>
             <span className="track-index">{String(track.number).padStart(2, "0")}</span>
             <div><strong>{track.title}</strong><small>{duration(track.durationMs)}</small></div>
@@ -217,6 +221,12 @@ function AlbumCard({ album, onEdit }: { album: Album; onEdit: (track: Track) => 
             </button>
           </div>
         ))}
+        {album.tracks.length > 3 && (
+          <button className="track-list-toggle" type="button" onClick={() => setExpanded((value) => !value)}>
+            <span>{expanded ? "Свернуть" : `Ещё ${hiddenTracks} ${hiddenTracks === 1 ? "трек" : "треков"}`}</span>
+            <ChevronRight className={expanded ? "expanded" : ""} />
+          </button>
+        )}
       </div>
     </article>
   );
