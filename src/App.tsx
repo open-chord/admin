@@ -91,7 +91,14 @@ function App() {
               <button className="toolbar-icon" onClick={() => navigate("albums")} aria-label="Назад"><ChevronRight /></button>
             )}
             {(view === "albums" || view === "tracks" || view === "lyrics") && (
-              <strong>{view === "albums" ? "Альбомы" : view === "tracks" ? "Все треки" : "Lyrics"}</strong>
+              <>
+                <strong>{view === "albums" ? "Альбомы" : view === "tracks" ? "Все треки" : "Lyrics"}</strong>
+                <small className="toolbar-count">
+                  {view === "albums"
+                    ? `${albums.length} релизов`
+                    : `${albums.flatMap((album) => album.tracks).filter((track) => view !== "lyrics" || track.lyricLines).length} позиций`}
+                </small>
+              </>
             )}
           </div>
           <div className="toolbar-actions">
@@ -110,7 +117,6 @@ function App() {
 
         {view === "albums" ? (
           <section className="collection-page page-enter">
-            <div className="collection-heading"><h1>Альбомы</h1><span>{albums.length} релизов</span></div>
             {loading ? (
               <div className="catalog-grid">{[1, 2, 3].map((key) => <div className="album-card skeleton" key={key} />)}</div>
             ) : albums.length === 0 ? (
@@ -245,7 +251,6 @@ function TrackCollection({ albums, lyricsOnly, onEdit }: { albums: Album[]; lyri
     .filter(({ track }) => !lyricsOnly || track.lyricLines);
   return (
     <section className="collection-page page-enter">
-      <div className="collection-heading"><h1>{lyricsOnly ? "Lyrics" : "Все треки"}</h1><span>{rows.length} позиций</span></div>
       <div className="track-collection">
         {rows.map(({ album, track }) => (
           <div className="collection-row" key={track.id}>
