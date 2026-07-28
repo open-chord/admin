@@ -58,3 +58,18 @@ export type ImportResult = {
   importedTracks: number;
   transcodedTracks: number;
 };
+
+/** Playlist offered as the root of a portable archive export. */
+export type ArchivePlaylist = {
+  id: string;
+  name: string;
+  tracks: number;
+};
+
+/** Summary returned after a committed `.openchord` import. */
+export type ArchiveImportResult = {
+  albums: number;
+  tracks: number;
+  playlists: number;
+  skippedAlbums: number;
+};
