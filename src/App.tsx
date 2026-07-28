@@ -78,6 +78,14 @@ function App() {
       if (event.key === "Escape") {
         setOpenMenu(null);
         setSettingsOpen(false);
+        setEditing(null);
+        setView((current) =>
+          current === "upload" || current === "album-import"
+            ? selectedAlbumId
+              ? "album"
+              : "albums"
+            : current,
+        );
       }
     };
     document.addEventListener("mousedown", closeMenu);
@@ -86,7 +94,7 @@ function App() {
       document.removeEventListener("mousedown", closeMenu);
       document.removeEventListener("keydown", closeWithEscape);
     };
-  }, []);
+  }, [selectedAlbumId]);
 
   const visibleAlbums = useMemo(() => {
     const value = query.toLowerCase().trim();
@@ -451,7 +459,9 @@ function UploadView({ defaults, onCancel, onUploaded }: { defaults?: Album; onCa
   };
 
   return (
-    <form className="upload-card glass page-enter" onSubmit={submit}>
+    <div className="sheet-backdrop workflow-backdrop" onMouseDown={onCancel}>
+    <form className="upload-card workflow-sheet glass" onSubmit={submit} onMouseDown={(event) => event.stopPropagation()}>
+      <button className="sheet-close" type="button" onClick={onCancel} aria-label="Закрыть"><X /></button>
       <div className="upload-lead">
         <span className="upload-symbol"><Music2 /></span>
         <div><span className="overline">Новая музыка</span><h2>Соберём релиз.</h2><p>Аудио, метаданные, обложка и lyrics — всё сразу попадёт в OpenChord.</p></div>
@@ -496,6 +506,7 @@ function UploadView({ defaults, onCancel, onUploaded }: { defaults?: Album; onCa
       {error && <p className="form-error">{error}</p>}
       <footer className="form-footer"><button type="button" className="glass-button" onClick={onCancel}>Отмена</button><button className="glass-button primary-action" disabled={submitting}><Upload /> {submitting ? "Загружаю…" : "Добавить в OpenChord"}</button></footer>
     </form>
+    </div>
   );
 }
 
@@ -550,7 +561,9 @@ function AlbumImportView({
 
   if (!draft) {
     return (
-      <section className="smart-import glass page-enter">
+      <div className="sheet-backdrop workflow-backdrop" onMouseDown={onCancel}>
+      <section className="smart-import workflow-sheet glass" onMouseDown={(event) => event.stopPropagation()}>
+        <button className="sheet-close" onClick={onCancel} aria-label="Закрыть"><X /></button>
         <div className="import-intro">
           <span className="upload-symbol"><WandSparkles /></span>
           <div>
@@ -587,11 +600,14 @@ function AlbumImportView({
         {error && <p className="form-error import-error">{error}</p>}
         <footer className="form-footer"><button className="glass-button" onClick={onCancel}>Отмена</button></footer>
       </section>
+      </div>
     );
   }
 
   return (
-    <section className="review-card glass page-enter">
+    <div className="sheet-backdrop workflow-backdrop" onMouseDown={onCancel}>
+    <section className="review-card workflow-sheet glass" onMouseDown={(event) => event.stopPropagation()}>
+      <button className="sheet-close" onClick={onCancel} aria-label="Закрыть"><X /></button>
       <div className="review-head">
         <div>
           <span className="overline">Черновик импорта</span>
@@ -637,6 +653,7 @@ function AlbumImportView({
         </button>
       </footer>
     </section>
+    </div>
   );
 }
 
