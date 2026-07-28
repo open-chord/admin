@@ -1,7 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap");
-
 :root {
-  font-family: "Manrope", -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
   color: #f7f7f7;
   background: #000;
   font-synthesis: none;
@@ -14,7 +12,7 @@
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; min-width: 320px; min-height: 100vh; background: #000; }
+body { margin: 0; min-width: 320px; min-height: 100vh; background: #000; -webkit-font-smoothing: auto; text-rendering: optimizeLegibility; }
 button, input, textarea { font: inherit; }
 button { color: inherit; }
 .app-shell { min-height: 100vh; overflow: hidden; }
@@ -298,7 +296,7 @@ h3 { font-size: 23px; letter-spacing: -.035em; margin: 7px 0 0; }
   backdrop-filter: blur(34px) saturate(1.25);
 }
 nav { margin-top: 4px; gap: 3px; }
-.nav-label { padding: 12px 11px 5px; color: var(--tertiary); text-transform: uppercase; letter-spacing: .13em; font-size: 9px; font-weight: 700; }
+.nav-label { padding: 12px 11px 5px; color: var(--tertiary); text-transform: uppercase; letter-spacing: .11em; font-size: 10px; font-weight: 700; }
 nav button { height: 34px; border-radius: 8px; font-size: 13px; }
 nav button svg { width: 16px; }
 nav button.active { background: rgba(255,255,255,.11); }
@@ -319,13 +317,13 @@ main { margin-left: 234px; padding: 34px 28px 60px; max-width: none; }
 }
 .toolbar-title { margin-right: auto; display: flex; align-items: center; gap: 8px; min-width: 0; }
 .toolbar-title strong { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.toolbar-count { color: var(--tertiary); font-size: 10px; white-space: nowrap; }
+.toolbar-count { color: var(--tertiary); font-size: 11px; white-space: nowrap; }
 .toolbar-icon { width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.07); display: grid; place-items: center; cursor: pointer; }
 .toolbar-icon svg { width: 15px; transform: rotate(180deg); }
 .toolbar-actions { display: flex; align-items: center; gap: 7px; }
 .toolbar-search { width: 225px; height: 32px; padding: 0 10px; display: flex; align-items: center; gap: 7px; border-radius: 9px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.08); color: var(--secondary); }
 .toolbar-search svg { width: 14px; }
-.toolbar-search input { width: 100%; border: 0; outline: 0; background: transparent; color: white; font-size: 11px; }
+.toolbar-search input { width: 100%; border: 0; outline: 0; background: transparent; color: white; font-size: 12px; }
 .toolbar-button { height: 32px; padding: 0 11px; border: 1px solid rgba(255,255,255,.11); border-radius: 9px; background: rgba(255,255,255,.07); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 11px; font-weight: 650; white-space: nowrap; }
 .toolbar-button:hover { background: rgba(255,255,255,.12); }
 .toolbar-button.primary { background: #f2f2f2; color: #080808; }
@@ -350,8 +348,8 @@ main { margin-left: 234px; padding: 34px 28px 60px; max-width: none; }
 .album-art > span { top: 7px; right: 7px; padding: 4px 7px; font-size: 9px; }
 .album-info { height: 50px; padding: 9px 1px 4px; }
 .album-info h4 { font-size: 13px; }
-.album-info p { font-size: 11px; }
-.album-meta { height: 22px; padding: 0 1px; border: 0; font-size: 9px; }
+.album-info p { font-size: 12px; }
+.album-meta { height: 24px; padding: 0 1px; border: 0; font-size: 10px; }
 .album-card:hover .album-info h4 { color: var(--accent); }
 
 .album-page { padding: 32px 4px 0; max-width: 1280px; }
