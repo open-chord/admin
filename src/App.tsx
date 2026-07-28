@@ -80,7 +80,7 @@ function App() {
   return (
     <div className="app-shell">
       <div className="mac-menu-bar">
-        <span className="mac-apple" aria-hidden="true"></span>
+        <span className="mac-app-icon" aria-hidden="true"><Music2 /></span>
         <div className="menu-anchor">
           <button className="app-menu-name" onClick={() => setOpenMenu(openMenu === "app" ? null : "app")}>OpenChord</button>
           {openMenu === "app" && (
@@ -208,7 +208,6 @@ function App() {
 function Sidebar({ view, navigate }: { view: View; navigate: (view: View) => void }) {
   return (
     <aside className="sidebar glass">
-      <div className="traffic-lights" aria-hidden="true"><i /><i /><i /></div>
       <nav>
         <span className="nav-label">Коллекция</span>
         <button className={view === "albums" || view === "album" ? "active" : ""} onClick={() => navigate("albums")}><Music2 /> <span>Альбомы</span></button>

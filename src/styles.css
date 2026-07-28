@@ -264,7 +264,8 @@ h3 { font-size: 23px; letter-spacing: -.035em; margin: 7px 0 0; }
 }
 .mac-menu-bar > button, .menu-anchor > button { height: 28px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; color: rgba(255,255,255,.9); cursor: pointer; font-size: 12px; }
 .mac-menu-bar > button:hover, .menu-anchor > button:hover { background: rgba(255,255,255,.1); }
-.mac-apple { width: 26px; margin-right: 2px; text-align: center; color: white; font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 17px; }
+.mac-app-icon { width: 26px; margin-right: 2px; display: grid; place-items: center; color: white; }
+.mac-app-icon svg { width: 16px; height: 16px; }
 .app-menu-name { font-weight: 750; }
 .menu-anchor { position: relative; }
 .mac-menu-popover {
@@ -296,8 +297,7 @@ h3 { font-size: 23px; letter-spacing: -.035em; margin: 7px 0 0; }
   box-shadow: 0 22px 60px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.08);
   backdrop-filter: blur(34px) saturate(1.25);
 }
-.sidebar > .traffic-lights { margin: 2px 7px 0; }
-nav { margin-top: 48px; gap: 3px; }
+nav { margin-top: 58px; gap: 3px; }
 .nav-label { padding: 12px 11px 5px; color: var(--tertiary); text-transform: uppercase; letter-spacing: .13em; font-size: 9px; font-weight: 700; }
 nav button { height: 34px; border-radius: 8px; font-size: 13px; }
 nav button svg { width: 16px; }
@@ -317,10 +317,6 @@ main { margin-left: 234px; padding: 34px 28px 60px; max-width: none; }
   background: rgba(4,4,5,.82);
   backdrop-filter: blur(28px);
 }
-.traffic-lights { display: flex; gap: 7px; }
-.traffic-lights i { width: 11px; height: 11px; border-radius: 50%; background: #ff5f57; }
-.traffic-lights i:nth-child(2) { background: #febc2e; }
-.traffic-lights i:nth-child(3) { background: #28c840; }
 .toolbar-title { margin-right: auto; display: flex; align-items: center; gap: 8px; min-width: 0; }
 .toolbar-title strong { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .toolbar-count { color: var(--tertiary); font-size: 10px; white-space: nowrap; }
@@ -381,7 +377,6 @@ main { margin-left: 234px; padding: 34px 28px 60px; max-width: none; }
   .sidebar { inset: auto 12px 12px; width: calc(100% - 24px); height: 60px; border-radius: 18px; border: 1px solid var(--stroke); }
   main { margin-left: 0; padding: 34px 16px 90px; }
   .topbar { margin: 0 -16px; padding: 0 16px; }
-  .sidebar > .traffic-lights { display: none; }
   .toolbar-button { width: 32px; padding: 0; justify-content: center; }
   .toolbar-button { font-size: 0; }
   .toolbar-search { width: min(220px, 32vw); }
