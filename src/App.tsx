@@ -12,13 +12,25 @@ import {
   PencilLine,
   Plus,
   Search,
+  Server,
+  Settings,
   Sparkles,
   Upload,
   WandSparkles,
   X,
 } from "lucide-react";
 import { DragEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { analyzeAlbum, commitAlbum, fetchCatalog, updateLyrics, uploadTrack } from "./api";
+import {
+  analyzeAlbum,
+  commitAlbum,
+  fetchCatalog,
+  getServerUrl,
+  serverResource,
+  setServerUrl,
+  testServerConnection,
+  updateLyrics,
+  uploadTrack,
+} from "./api";
 import type { Album, ImportDraft, ImportResult, Track } from "./types";
 
 type View = "albums" | "tracks" | "lyrics" | "album" | "upload" | "album-import";
@@ -37,7 +49,10 @@ function App() {
   const [notice, setNotice] = useState<Notice>(null);
   const [editing, setEditing] = useState<Track | null>(null);
   const [selectedAlbumId, setSelectedAlbumId] = useState("");
+  const [uploadAlbumId, setUploadAlbumId] = useState("");
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const menuBar = useRef<HTMLDivElement>(null);
 
   const refresh = async () => {
     try {
@@ -55,6 +70,23 @@ function App() {
     const timer = window.setTimeout(() => setNotice(null), 3200);
     return () => window.clearTimeout(timer);
   }, [notice]);
+  useEffect(() => {
+    const closeMenu = (event: MouseEvent) => {
+      if (!menuBar.current?.contains(event.target as Node)) setOpenMenu(null);
+    };
+    const closeWithEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpenMenu(null);
+        setSettingsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", closeMenu);
+    document.addEventListener("keydown", closeWithEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeMenu);
+      document.removeEventListener("keydown", closeWithEscape);
+    };
+  }, []);
 
   const visibleAlbums = useMemo(() => {
     const value = query.toLowerCase().trim();
@@ -79,40 +111,40 @@ function App() {
 
   return (
     <div className="app-shell">
-      <div className="mac-menu-bar">
+      <div className="mac-menu-bar" ref={menuBar}>
         <span className="mac-app-icon" aria-hidden="true"><Music2 /></span>
         <div className="menu-anchor">
-          <button className="app-menu-name" onClick={() => setOpenMenu(openMenu === "app" ? null : "app")}>OpenChord</button>
+          <button className="app-menu-name" aria-expanded={openMenu === "app"} onClick={() => setOpenMenu(openMenu === "app" ? null : "app")}>OpenChord</button>
           {openMenu === "app" && (
             <div className="mac-menu-popover app-popover">
               <button disabled>About OpenChord Studio</button>
               <i />
-              <button onClick={() => setOpenMenu(null)}>Settings… <small>TODO</small></button>
+              <button onClick={() => { setOpenMenu(null); setSettingsOpen(true); }}><Settings /> Settings…</button>
             </div>
           )}
         </div>
         <div className="menu-anchor">
-          <button onClick={() => setOpenMenu(openMenu === "file" ? null : "file")}>File</button>
+          <button aria-expanded={openMenu === "file"} onClick={() => setOpenMenu(openMenu === "file" ? null : "file")}>File</button>
           {openMenu === "file" && (
             <div className="mac-menu-popover">
               <button onClick={() => { setOpenMenu(null); navigate("album-import"); }}><FolderUp /> Import Album…</button>
-              <button onClick={() => { setOpenMenu(null); navigate("upload"); }}><Plus /> Add Track…</button>
+              <button onClick={() => { setOpenMenu(null); setUploadAlbumId(""); navigate("upload"); }}><Plus /> Add Track…</button>
               <i />
               <button disabled>Import OpenChord Archive… <small>TODO</small></button>
               <button disabled>Export Collection… <small>TODO</small></button>
             </div>
           )}
         </div>
-        <button onClick={() => setOpenMenu(null)}>Edit</button>
-        <button onClick={() => setOpenMenu(null)}>View</button>
-        <button onClick={() => setOpenMenu(null)}>Window</button>
-        <button onClick={() => setOpenMenu(null)}>Help</button>
+        <button disabled>Edit</button>
+        <button disabled>View</button>
+        <button disabled>Window</button>
+        <button disabled>Help</button>
       </div>
-      <div
-        className="artwork-atmosphere"
-        style={featured?.hasArtwork ? { backgroundImage: `url(/media/artwork/${featured.id})` } : undefined}
-      />
-      <Sidebar view={view} navigate={navigate} />
+        <div
+          className="artwork-atmosphere"
+          style={featured?.hasArtwork ? { backgroundImage: `url(${serverResource(`/media/artwork/${featured.id}`)})` } : undefined}
+        />
+      <Sidebar view={view} navigate={navigate} serverUrl={getServerUrl()} />
 
       <main>
         <header className="topbar">
@@ -147,6 +179,8 @@ function App() {
               <div className="catalog-grid">{[1, 2, 3].map((key) => <div className="album-card skeleton" key={key} />)}</div>
             ) : albums.length === 0 ? (
               <EmptyState onAdd={() => navigate("upload")} />
+            ) : visibleAlbums.length === 0 ? (
+              <CompactEmpty title="Nothing found" detail="Try another artist, album, or track name." />
             ) : (
               <div className="catalog-grid">
                 {visibleAlbums.map((album) => (
@@ -163,11 +197,19 @@ function App() {
             )}
           </section>
         ) : view === "album" && selectedAlbum ? (
-          <AlbumDetail album={selectedAlbum} onEdit={setEditing} onAddTrack={() => navigate("upload")} />
+          <AlbumDetail
+            album={selectedAlbum}
+            onEdit={setEditing}
+            onAddTrack={() => {
+              setUploadAlbumId(selectedAlbum.id);
+              navigate("upload");
+            }}
+          />
         ) : view === "tracks" || view === "lyrics" ? (
           <TrackCollection albums={visibleAlbums} lyricsOnly={view === "lyrics"} onEdit={setEditing} />
         ) : view === "upload" ? (
           <UploadView
+            defaults={albums.find((album) => album.id === uploadAlbumId)}
             onCancel={() => navigate(selectedAlbum ? "album" : "albums")}
             onUploaded={async (track) => {
               await refresh();
@@ -200,12 +242,23 @@ function App() {
           }}
         />
       )}
+      {settingsOpen && (
+        <SettingsSheet
+          onClose={() => setSettingsOpen(false)}
+          onSaved={async () => {
+            setSettingsOpen(false);
+            setLoading(true);
+            await refresh();
+            setNotice({ text: "Server connection updated" });
+          }}
+        />
+      )}
       {notice && <div className={`notice glass ${notice.error ? "error" : ""}`}>{notice.error ? <X /> : <Check />} {notice.text}</div>}
     </div>
   );
 }
 
-function Sidebar({ view, navigate }: { view: View; navigate: (view: View) => void }) {
+function Sidebar({ view, navigate, serverUrl }: { view: View; navigate: (view: View) => void; serverUrl: string }) {
   return (
     <aside className="sidebar glass">
       <nav>
@@ -214,7 +267,7 @@ function Sidebar({ view, navigate }: { view: View; navigate: (view: View) => voi
         <button className={view === "tracks" ? "active" : ""} onClick={() => navigate("tracks")}><ListMusic /> <span>Треки</span></button>
         <button className={view === "lyrics" ? "active" : ""} onClick={() => navigate("lyrics")}><Sparkles /> <span>Lyrics</span></button>
       </nav>
-      <div className="server-state"><i /><span>OpenChord Server<small>{location.host}</small></span></div>
+      <div className="server-state"><i /><span>OpenChord Server<small>{serverUrl.replace(/^https?:\/\//, "")}</small></span></div>
     </aside>
   );
 }
@@ -223,7 +276,7 @@ function AlbumCard({ album, onSelect }: { album: Album; onSelect: () => void }) 
   return (
     <button className="album-card" type="button" onClick={onSelect}>
       <div className="album-art">
-        {album.hasArtwork ? <img src={`/media/artwork/${album.id}`} alt="" /> : <div className="art-fallback"><Music2 /></div>}
+        {album.hasArtwork ? <img src={serverResource(`/media/artwork/${album.id}`)} alt="" /> : <div className="art-fallback"><Music2 /></div>}
         <span>{album.year}</span>
       </div>
       <div className="album-info">
@@ -243,7 +296,7 @@ function AlbumDetail({ album, onEdit, onAddTrack }: { album: Album; onEdit: (tra
     <section className="album-page page-enter">
       <header className="album-page-header">
         <div className="album-page-art">
-          {album.hasArtwork ? <img src={`/media/artwork/${album.id}`} alt="" /> : <div className="art-fallback"><Music2 /></div>}
+          {album.hasArtwork ? <img src={serverResource(`/media/artwork/${album.id}`)} alt="" /> : <div className="art-fallback"><Music2 /></div>}
         </div>
         <div className="album-page-copy">
           <span className="overline">Альбом · {album.year}</span>
@@ -276,8 +329,14 @@ function TrackCollection({ albums, lyricsOnly, onEdit }: { albums: Album[]; lyri
     .filter(({ track }) => !lyricsOnly || track.lyricLines);
   return (
     <section className="collection-page page-enter">
-      <div className="track-collection">
-        {rows.map(({ album, track }) => (
+      {rows.length === 0 ? (
+        <CompactEmpty
+          title={lyricsOnly ? "No lyrics yet" : "No tracks found"}
+          detail={lyricsOnly ? "Add synchronized lyrics from an album or the track list." : "Try changing the search query."}
+        />
+      ) : (
+        <div className="track-collection">
+          {rows.map(({ album, track }) => (
           <div className="collection-row" key={track.id}>
             <span className="track-index">{String(track.number).padStart(2, "0")}</span>
             <div><strong>{track.title}</strong><small>{album.artist}</small></div>
@@ -285,9 +344,68 @@ function TrackCollection({ albums, lyricsOnly, onEdit }: { albums: Album[]; lyri
             <span>{duration(track.durationMs)}</span>
             <button onClick={() => onEdit(track)}><PencilLine /></button>
           </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </section>
+  );
+}
+
+function CompactEmpty({ title, detail }: { title: string; detail: string }) {
+  return <div className="compact-empty"><Search /><strong>{title}</strong><p>{detail}</p></div>;
+}
+
+function SettingsSheet({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const [url, setUrl] = useState(getServerUrl());
+  const [status, setStatus] = useState<{ text: string; error?: boolean } | null>(null);
+  const [testing, setTesting] = useState(false);
+
+  const test = async () => {
+    setTesting(true);
+    setStatus(null);
+    try {
+      await testServerConnection(url);
+      setStatus({ text: "Connection successful" });
+    } catch {
+      setStatus({ text: "Connection failed. A remote origin also requires backend CORS support (TODO).", error: true });
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const save = () => {
+    setStatus(null);
+    try {
+      setServerUrl(url);
+      onSaved();
+    } catch {
+      setStatus({ text: "Enter a valid server URL.", error: true });
+    }
+  };
+
+  return (
+    <div className="sheet-backdrop">
+      <section className="settings-sheet glass">
+        <button className="sheet-close" onClick={onClose}><X /></button>
+        <span className="settings-icon"><Server /></span>
+        <span className="overline">Connection</span>
+        <h2>OpenChord Server</h2>
+        <p>Choose the server managed by this Studio installation.</p>
+        <label className="field">
+          <span>Server URL</span>
+          <input value={url} onChange={(event) => setUrl(event.target.value)} placeholder={window.location.origin} />
+        </label>
+        <div className="cors-note">
+          <strong>Remote connections</strong>
+          <span>Cross-origin servers require configurable CORS support in OpenChord Server. That backend work remains TODO.</span>
+        </div>
+        {status && <p className={`connection-result ${status.error ? "error" : ""}`}>{status.text}</p>}
+        <footer>
+          <button className="toolbar-button" disabled={testing} onClick={() => void test()}>{testing ? "Testing…" : "Test Connection"}</button>
+          <button className="toolbar-button primary" onClick={save}>Save</button>
+        </footer>
+      </section>
+    </div>
   );
 }
 
@@ -295,7 +413,7 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
   return <div className="empty glass"><span><Music2 /></span><h3>Библиотека пуста</h3><p>Добавь первый трек — он сразу появится в приложении.</p><button className="glass-button primary-action" onClick={onAdd}><Plus /> Добавить трек</button></div>;
 }
 
-function UploadView({ onCancel, onUploaded }: { onCancel: () => void; onUploaded: (track: Track) => void }) {
+function UploadView({ defaults, onCancel, onUploaded }: { defaults?: Album; onCancel: () => void; onUploaded: (track: Track) => void }) {
   const [audio, setAudio] = useState<File | null>(null);
   const [artwork, setArtwork] = useState<File | null>(null);
   const [durationMs, setDurationMs] = useState(0);
@@ -349,14 +467,20 @@ function UploadView({ onCancel, onUploaded }: { onCancel: () => void; onUploaded
           />
           <input ref={audioRef} className="hidden-input" type="file" accept="audio/*" onChange={(event) => chooseAudio(event.target.files?.[0])} />
           <div className="field-pair">
-            <Field name="artist" label="Исполнитель" placeholder="Deftones" required />
-            <Field name="album" label="Альбом" placeholder="Diamond Eyes" required />
+            <Field name="artist" label="Исполнитель" placeholder="Deftones" defaultValue={defaults?.artist} required />
+            <Field name="album" label="Альбом" placeholder="Diamond Eyes" defaultValue={defaults?.title} required />
           </div>
           <Field name="title" label="Название трека" placeholder="Sextape" required />
           <div className="field-triplet">
-            <Field name="releaseYear" label="Год" type="number" defaultValue="2026" required />
+            <Field name="releaseYear" label="Год" type="number" defaultValue={String(defaults?.year ?? 2026)} required />
             <Field name="discNumber" label="Диск" type="number" defaultValue="1" required />
-            <Field name="trackNumber" label="Номер" type="number" defaultValue="1" required />
+            <Field
+              name="trackNumber"
+              label="Номер"
+              type="number"
+              defaultValue={String(defaults ? Math.max(0, ...defaults.tracks.map((track) => track.number)) + 1 : 1)}
+              required
+            />
           </div>
         </div>
         <div className="form-stack secondary-column">

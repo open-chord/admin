@@ -262,6 +262,8 @@ h3 { font-size: 23px; letter-spacing: -.035em; margin: 7px 0 0; }
 }
 .mac-menu-bar > button, .menu-anchor > button { height: 28px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; color: rgba(255,255,255,.9); cursor: pointer; font-size: 12px; }
 .mac-menu-bar > button:hover, .menu-anchor > button:hover { background: rgba(255,255,255,.1); }
+.mac-menu-bar > button:disabled { color: rgba(255,255,255,.38); cursor: default; }
+.mac-menu-bar > button:disabled:hover { background: transparent; }
 .mac-app-icon { width: 26px; margin-right: 2px; display: grid; place-items: center; color: white; }
 .mac-app-icon svg { width: 16px; height: 16px; }
 .app-menu-name { font-weight: 750; }
@@ -370,6 +372,22 @@ main { margin-left: 234px; padding: 34px 28px 60px; max-width: none; }
 .collection-row > div small, .collection-row > span { color: var(--secondary); font-size: 10px; }
 .collection-row button { width: 28px; height: 28px; border: 0; border-radius: 8px; background: rgba(255,255,255,.06); color: var(--secondary); display: grid; place-items: center; cursor: pointer; }
 .collection-row button svg { width: 13px; }
+.compact-empty { min-height: 260px; display: grid; place-items: center; align-content: center; text-align: center; color: var(--secondary); }
+.compact-empty > svg { width: 24px; margin-bottom: 12px; }
+.compact-empty strong { color: white; font-size: 15px; }
+.compact-empty p { margin: 5px 0 0; font-size: 11px; }
+.settings-sheet { width: min(500px, 100%); border-radius: 20px; padding: 28px; position: relative; }
+.settings-sheet h2 { margin: 8px 0 5px; font-size: 27px; }
+.settings-sheet > p { color: var(--secondary); font-size: 12px; margin-bottom: 22px; }
+.settings-icon { width: 42px; height: 42px; margin-bottom: 17px; border-radius: 12px; background: rgba(255,255,255,.1); display: grid; place-items: center; }
+.settings-icon svg { width: 19px; }
+.settings-sheet .field { display: block; }
+.cors-note { margin-top: 14px; padding: 13px; border: 1px solid rgba(255,190,70,.16); border-radius: 11px; background: rgba(255,190,70,.055); display: grid; gap: 4px; }
+.cors-note strong { color: #f1c66f; font-size: 11px; }
+.cors-note span { color: var(--secondary); font-size: 10px; line-height: 1.5; }
+.connection-result { margin: 12px 0 0 !important; color: #6ee493 !important; }
+.connection-result.error { color: #ff8585 !important; }
+.settings-sheet footer { margin-top: 22px; display: flex; justify-content: flex-end; gap: 7px; }
 
 @media (max-width: 900px) {
   .sidebar { inset: auto 12px 12px; width: calc(100% - 24px); height: 60px; border-radius: 18px; border: 1px solid var(--stroke); }
