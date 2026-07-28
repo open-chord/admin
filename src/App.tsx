@@ -85,28 +85,28 @@ function App() {
           <button className="app-menu-name" onClick={() => setOpenMenu(openMenu === "app" ? null : "app")}>OpenChord</button>
           {openMenu === "app" && (
             <div className="mac-menu-popover app-popover">
-              <button disabled>Об OpenChord Studio</button>
+              <button disabled>About OpenChord Studio</button>
               <i />
-              <button onClick={() => setOpenMenu(null)}>Настройки… <small>TODO</small></button>
+              <button onClick={() => setOpenMenu(null)}>Settings… <small>TODO</small></button>
             </div>
           )}
         </div>
         <div className="menu-anchor">
-          <button onClick={() => setOpenMenu(openMenu === "file" ? null : "file")}>Файл</button>
+          <button onClick={() => setOpenMenu(openMenu === "file" ? null : "file")}>File</button>
           {openMenu === "file" && (
             <div className="mac-menu-popover">
-              <button onClick={() => { setOpenMenu(null); navigate("album-import"); }}><FolderUp /> Импортировать альбом…</button>
-              <button onClick={() => { setOpenMenu(null); navigate("upload"); }}><Plus /> Добавить один трек…</button>
+              <button onClick={() => { setOpenMenu(null); navigate("album-import"); }}><FolderUp /> Import Album…</button>
+              <button onClick={() => { setOpenMenu(null); navigate("upload"); }}><Plus /> Add Track…</button>
               <i />
-              <button disabled>Импортировать .openchord… <small>TODO</small></button>
-              <button disabled>Экспортировать коллекцию… <small>TODO</small></button>
+              <button disabled>Import OpenChord Archive… <small>TODO</small></button>
+              <button disabled>Export Collection… <small>TODO</small></button>
             </div>
           )}
         </div>
-        <button onClick={() => setOpenMenu(null)}>Правка</button>
-        <button onClick={() => setOpenMenu(null)}>Вид</button>
-        <button onClick={() => setOpenMenu(null)}>Окно</button>
-        <button onClick={() => setOpenMenu(null)}>Справка</button>
+        <button onClick={() => setOpenMenu(null)}>Edit</button>
+        <button onClick={() => setOpenMenu(null)}>View</button>
+        <button onClick={() => setOpenMenu(null)}>Window</button>
+        <button onClick={() => setOpenMenu(null)}>Help</button>
       </div>
       <div
         className="artwork-atmosphere"

@@ -248,7 +248,7 @@ h3 { font-size: 23px; letter-spacing: -.035em; margin: 7px 0 0; }
 }
 
 /* Studio is an administration utility: compact navigation, toolbar and data-first content. */
-.app-shell { padding-top: 34px; }
+.app-shell { padding-top: 0; }
 .mac-menu-bar {
   position: fixed;
   inset: 0 0 auto;
@@ -304,7 +304,7 @@ nav button svg { width: 16px; }
 nav button.active { background: rgba(255,255,255,.11); }
 .server-state { margin-bottom: 2px; }
 
-main { margin-left: 234px; padding: 0 28px 60px; max-width: none; }
+main { margin-left: 234px; padding: 34px 28px 60px; max-width: none; }
 .topbar {
   position: sticky;
   top: 34px;
@@ -379,7 +379,7 @@ main { margin-left: 234px; padding: 0 28px 60px; max-width: none; }
 
 @media (max-width: 900px) {
   .sidebar { inset: auto 12px 12px; width: calc(100% - 24px); height: 60px; border-radius: 18px; border: 1px solid var(--stroke); }
-  main { margin-left: 0; padding: 0 16px 90px; }
+  main { margin-left: 0; padding: 34px 16px 90px; }
   .topbar { margin: 0 -16px; padding: 0 16px; }
   .sidebar > .traffic-lights { display: none; }
   .toolbar-button { width: 32px; padding: 0; justify-content: center; }
