@@ -1,13 +1,10 @@
 import {
   ArrowUp,
-  Archive,
   Check,
   ChevronRight,
   Disc3,
-  Download,
   FileCheck2,
   FileAudio,
-  FileUp,
   FolderUp,
   ImagePlus,
   Library,
@@ -22,26 +19,10 @@ import {
   X,
 } from "lucide-react";
 import { DragEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import {
-  analyzeAlbum,
-  commitAlbum,
-  downloadOpenChordArchive,
-  fetchArchivePlaylists,
-  fetchCatalog,
-  importOpenChordArchive,
-  updateLyrics,
-  uploadTrack,
-} from "./api";
-import type {
-  Album,
-  ArchiveImportResult,
-  ArchivePlaylist,
-  ImportDraft,
-  ImportResult,
-  Track,
-} from "./types";
+import { analyzeAlbum, commitAlbum, fetchCatalog, updateLyrics, uploadTrack } from "./api";
+import type { Album, ImportDraft, ImportResult, Track } from "./types";
 
-type View = "library" | "upload" | "album-import" | "archive";
+type View = "library" | "upload" | "album-import";
 type Notice = { text: string; error?: boolean } | null;
 
 const duration = (ms: number) => {
@@ -107,18 +88,8 @@ function App() {
       <main>
         <header className="topbar">
           <div>
-            <span className="context-label">
-              {view === "library" ? "OpenChord Studio" : view === "archive" ? "Переносимая библиотека" : "Импорт музыки"}
-            </span>
-            <h1>
-              {view === "library"
-                ? "Библиотека"
-                : view === "album-import"
-                  ? "Импорт альбома"
-                  : view === "archive"
-                    ? "Архив OpenChord"
-                    : "Добавить музыку"}
-            </h1>
+            <span className="context-label">{view === "library" ? "OpenChord Studio" : "Импорт музыки"}</span>
+            <h1>{view === "library" ? "Библиотека" : view === "album-import" ? "Импорт альбома" : "Добавить музыку"}</h1>
           </div>
           {view === "library" && (
             <button className="glass-button primary-action" onClick={() => navigate("upload")}>
@@ -174,7 +145,7 @@ function App() {
               setNotice({ text: `«${track.title}» добавлен в библиотеку` });
             }}
           />
-        ) : view === "album-import" ? (
+        ) : (
           <AlbumImportView
             onCancel={() => navigate("library")}
             onImported={async (result) => {
@@ -182,15 +153,6 @@ function App() {
               navigate("library");
               setNotice({
                 text: `«${result.album}» импортирован · ${result.importedTracks} треков${result.transcodedTracks ? ` · ${result.transcodedTracks} в ALAC` : ""}`,
-              });
-            }}
-          />
-        ) : (
-          <ArchiveView
-            onImported={async (result) => {
-              await refresh();
-              setNotice({
-                text: `Архив импортирован · ${result.albums} альбомов · ${result.tracks} треков · ${result.playlists} плейлистов${result.skippedAlbums ? ` · ${result.skippedAlbums} пропущено` : ""}`,
               });
             }}
           />
@@ -223,113 +185,10 @@ function Sidebar({ view, navigate }: { view: View; navigate: (view: View) => voi
       <nav>
         <button className={view === "library" ? "active" : ""} onClick={() => navigate("library")}><Library /> <span>Библиотека</span></button>
         <button className={view === "album-import" ? "active" : ""} onClick={() => navigate("album-import")}><FolderUp /> <span>Импорт альбома</span></button>
-        <button className={view === "archive" ? "active" : ""} onClick={() => navigate("archive")}><Archive /> <span>Архив OpenChord</span></button>
         <button className={view === "upload" ? "active" : ""} onClick={() => navigate("upload")}><Plus /> <span>Один трек</span></button>
       </nav>
       <div className="server-state"><i /><span>OpenChord Server<small>{location.host}</small></span></div>
     </aside>
-  );
-}
-
-function ArchiveView({ onImported }: { onImported: (result: ArchiveImportResult) => void }) {
-  const input = useRef<HTMLInputElement>(null);
-  const [playlists, setPlaylists] = useState<ArchivePlaylist[]>([]);
-  const [selectedPlaylist, setSelectedPlaylist] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    fetchArchivePlaylists().then(setPlaylists).catch((reason) => {
-      setError(reason instanceof Error ? reason.message : "Не удалось загрузить плейлисты");
-    });
-  }, []);
-
-  const importArchive = async (file?: File) => {
-    if (!file) return;
-    setBusy(true);
-    setError("");
-    try {
-      onImported(await importOpenChordArchive(file));
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Не удалось импортировать архив");
-    } finally {
-      setBusy(false);
-      if (input.current) input.current.value = "";
-    }
-  };
-
-  return (
-    <section className="archive-page page-enter">
-      <div className="hero-panel glass archive-hero">
-        <div className="hero-copy">
-          <span className="overline">.openchord · draft 0.1</span>
-          <h2>Забери библиотеку<br />с собой.</h2>
-          <p>Аудио, альбомы, порядок треков, обложки и плейлисты в одном проверяемом архиве.</p>
-        </div>
-        <Archive size={88} strokeWidth={1.15} />
-      </div>
-
-      <div className="archive-grid">
-        <article className="upload-card glass">
-          <span className="upload-symbol"><Download /></span>
-          <div>
-            <span className="overline">Экспорт</span>
-            <h2>Вся библиотека</h2>
-            <p>Сервер соберёт каталог и будет отдавать медиа потоком, не удерживая архив целиком в памяти.</p>
-          </div>
-          <button className="glass-button primary-action" onClick={() => downloadOpenChordArchive()}>
-            <Download /> Скачать всё
-          </button>
-        </article>
-
-        <article className="upload-card glass">
-          <span className="upload-symbol"><ListMusic /></span>
-          <div>
-            <span className="overline">Точный экспорт</span>
-            <h2>Один плейлист</h2>
-            <p>В архив попадут сам плейлист, его треки, альбомы, исполнители и все связанные файлы.</p>
-          </div>
-          <label className="field">
-            <span>Плейлист</span>
-            <select value={selectedPlaylist} onChange={(event) => setSelectedPlaylist(event.target.value)}>
-              <option value="">Выбери плейлист</option>
-              {playlists.map((playlist) => (
-                <option key={playlist.id} value={playlist.id}>
-                  {playlist.name} · {playlist.tracks} треков
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            className="glass-button primary-action"
-            disabled={!selectedPlaylist}
-            onClick={() => downloadOpenChordArchive(selectedPlaylist)}
-          >
-            <Download /> Скачать плейлист
-          </button>
-        </article>
-
-        <article className="upload-card glass archive-import">
-          <span className="upload-symbol"><FileUp /></span>
-          <div>
-            <span className="overline">Восстановление</span>
-            <h2>Импорт архива</h2>
-            <p>OpenChord проверит структуру, безопасные пути, размеры и SHA-256 каждого встроенного файла.</p>
-          </div>
-          <input
-            ref={input}
-            className="hidden-input"
-            type="file"
-            accept=".openchord,application/vnd.openchord.archive+zip,application/zip"
-            onChange={(event) => void importArchive(event.target.files?.[0])}
-          />
-          <button className="glass-button primary-action" disabled={busy} onClick={() => input.current?.click()}>
-            <FileUp /> {busy ? "Проверяю и импортирую…" : "Выбрать .openchord"}
-          </button>
-        </article>
-      </div>
-      {error && <p className="form-error">{error}</p>}
-    </section>
   );
 }
 
