@@ -297,7 +297,7 @@ h3 { font-size: 23px; letter-spacing: -.035em; margin: 7px 0 0; }
   box-shadow: 0 22px 60px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.08);
   backdrop-filter: blur(34px) saturate(1.25);
 }
-nav { margin-top: 58px; gap: 3px; }
+nav { margin-top: 4px; gap: 3px; }
 .nav-label { padding: 12px 11px 5px; color: var(--tertiary); text-transform: uppercase; letter-spacing: .13em; font-size: 9px; font-weight: 700; }
 nav button { height: 34px; border-radius: 8px; font-size: 13px; }
 nav button svg { width: 16px; }
