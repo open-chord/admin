@@ -1,4 +1,4 @@
-import type { Album, ImportDraft, ImportResult, Track } from "./types";
+import type { Album, ArchiveImportResult, ArchivePlaylist, ImportDraft, ImportResult, Track } from "./types";
 
 const SERVER_URL_KEY = "openchord.serverUrl";
 
@@ -111,4 +111,26 @@ export async function commitAlbum(draft: ImportDraft): Promise<ImportResult> {
       }),
     }),
   );
+}
+
+export async function fetchArchivePlaylists(): Promise<ArchivePlaylist[]> {
+  return parse(await fetch(serverResource("/api/admin/openchord/playlists")));
+}
+
+export function downloadOpenChordArchive(playlistId?: string): void {
+  const query = playlistId
+    ? `scope=playlist&playlistId=${encodeURIComponent(playlistId)}`
+    : "scope=library";
+  const link = document.createElement("a");
+  link.href = serverResource(`/api/admin/openchord/export?${query}`);
+  link.download = "";
+  document.body.append(link);
+  link.click();
+  link.remove();
+}
+
+export async function importOpenChordArchive(file: File): Promise<ArchiveImportResult> {
+  const body = new FormData();
+  body.append("archive", file);
+  return parse(await fetch(serverResource("/api/admin/openchord/import"), { method: "POST", body }));
 }
