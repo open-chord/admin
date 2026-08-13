@@ -8,6 +8,7 @@ import { TrackUploadSheet } from "./features/import/TrackUploadSheet";
 import { AlbumCollection, AlbumDetail, TrackCollection } from "./features/library/LibraryViews";
 import { LyricsSheet } from "./features/lyrics/LyricsSheet";
 import { SettingsSheet } from "./features/settings/SettingsSheet";
+import { ArchiveView } from "./features/archive/ArchiveView";
 import type { Album, Track } from "./types";
 
 function App() {
@@ -99,6 +100,7 @@ function App() {
         onSettings={() => { setOpenMenu(null); setSettingsOpen(true); }}
         onImportAlbum={() => { setOpenMenu(null); navigate("album-import"); }}
         onAddTrack={() => { setOpenMenu(null); setUploadAlbumId(""); navigate("upload"); }}
+        onArchive={() => { setOpenMenu(null); navigate("archive"); }}
       />
       <div
         className="artwork-atmosphere"
@@ -140,6 +142,16 @@ function App() {
         )}
         {(view === "tracks" || view === "lyrics") && (
           <TrackCollection albums={visibleAlbums} lyricsOnly={view === "lyrics"} onEdit={setEditing} />
+        )}
+        {view === "archive" && (
+          <ArchiveView
+            onImported={async (result) => {
+              await refresh();
+              setNotice({
+                text: `Архив импортирован · ${result.albums} альбомов · ${result.tracks} треков · ${result.playlists} плейлистов${result.skippedAlbums ? ` · ${result.skippedAlbums} пропущено` : ""}`,
+              });
+            }}
+          />
         )}
       </main>
 

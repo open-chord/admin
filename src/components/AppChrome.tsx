@@ -1,4 +1,4 @@
-import { ChevronRight, FolderUp, ListMusic, Music2, Plus, Search, Settings, Sparkles } from "lucide-react";
+import { Archive, ChevronRight, FolderUp, ListMusic, Music2, Plus, Search, Settings, Sparkles } from "lucide-react";
 import type { RefObject } from "react";
 import type { View } from "../app/navigation";
 
@@ -9,6 +9,7 @@ type MenuBarProps = {
   onSettings: () => void;
   onImportAlbum: () => void;
   onAddTrack: () => void;
+  onArchive: () => void;
 };
 
 export function MenuBar({
@@ -18,6 +19,7 @@ export function MenuBar({
   onSettings,
   onImportAlbum,
   onAddTrack,
+  onArchive,
 }: MenuBarProps) {
   return (
     <div className="mac-menu-bar" ref={menuRef}>
@@ -39,8 +41,7 @@ export function MenuBar({
             <button onClick={onImportAlbum}><FolderUp /> Import Album…</button>
             <button onClick={onAddTrack}><Plus /> Add Track…</button>
             <i />
-            <button disabled>Import OpenChord Archive… <small>TODO</small></button>
-            <button disabled>Export Collection… <small>TODO</small></button>
+            <button onClick={onArchive}><Archive /> OpenChord Archive…</button>
           </div>
         )}
       </div>
@@ -68,6 +69,7 @@ export function Sidebar({
         <button className={view === "albums" || view === "album" ? "active" : ""} onClick={() => navigate("albums")}><Music2 /> <span>Альбомы</span></button>
         <button className={view === "tracks" ? "active" : ""} onClick={() => navigate("tracks")}><ListMusic /> <span>Треки</span></button>
         <button className={view === "lyrics" ? "active" : ""} onClick={() => navigate("lyrics")}><Sparkles /> <span>Lyrics</span></button>
+        <button className={view === "archive" ? "active" : ""} onClick={() => navigate("archive")}><Archive /> <span>Архив</span></button>
       </nav>
       <div className="server-state"><i /><span>OpenChord Server<small>{serverUrl.replace(/^https?:\/\//, "")}</small></span></div>
     </aside>
@@ -101,6 +103,7 @@ export function Toolbar({
             <small className="toolbar-count">{view === "albums" ? `${albumCount} релизов` : `${itemCount} позиций`}</small>
           </>
         )}
+        {view === "archive" && <strong>Архив OpenChord</strong>}
       </div>
       <div className="toolbar-actions">
         {collectionView && (

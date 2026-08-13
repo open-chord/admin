@@ -9,6 +9,7 @@ describe("MenuBar", () => {
     const user = userEvent.setup();
     const onImportAlbum = vi.fn();
     const onAddTrack = vi.fn();
+    const onArchive = vi.fn();
     const setOpenMenu = vi.fn();
 
     const { rerender } = render(
@@ -19,6 +20,7 @@ describe("MenuBar", () => {
         onSettings={vi.fn()}
         onImportAlbum={onImportAlbum}
         onAddTrack={onAddTrack}
+        onArchive={onArchive}
       />,
     );
 
@@ -33,13 +35,16 @@ describe("MenuBar", () => {
         onSettings={vi.fn()}
         onImportAlbum={onImportAlbum}
         onAddTrack={onAddTrack}
+        onArchive={onArchive}
       />,
     );
     await user.click(screen.getByRole("button", { name: "Import Album…" }));
     await user.click(screen.getByRole("button", { name: "Add Track…" }));
+    await user.click(screen.getByRole("button", { name: "OpenChord Archive…" }));
 
     expect(onImportAlbum).toHaveBeenCalledOnce();
     expect(onAddTrack).toHaveBeenCalledOnce();
+    expect(onArchive).toHaveBeenCalledOnce();
   });
 });
 

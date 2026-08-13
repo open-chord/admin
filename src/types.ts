@@ -58,3 +58,16 @@ export type ImportResult = {
   importedTracks: number;
   transcodedTracks: number;
 };
+
+export type ArchivePlaylist = {
+  id: string;
+  name: string;
+  tracks: number;
+};
+
+export type ArchiveImportResult = {
+  albums: number;
+  tracks: number;
+  playlists: number;
+  skippedAlbums: number;
+};
