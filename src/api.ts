@@ -12,6 +12,7 @@ export function hasAccessToken(): boolean { return Boolean(window.localStorage.g
 
 export async function authorizedFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
   const token = window.localStorage.getItem(ACCESS_TOKEN_KEY);
+  if (!token && Object.keys(init).length === 0) return fetch(input);
   const headers = new Headers(init.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
   return fetch(input, { ...init, headers });
