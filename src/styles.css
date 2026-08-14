@@ -13,6 +13,20 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; min-height: 100vh; background: #000; -webkit-font-smoothing: auto; text-rendering: optimizeLegibility; }
+.auth-page { margin: 0; min-height: 100vh; max-width: none; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at 50% 10%, #363147 0, #09090a 42%, #000 75%); }
+.auth-card { width: min(460px, 100%); border-radius: 28px; padding: 26px; }
+.auth-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 34px; }
+.auth-brand strong, .auth-brand small { display: block; }
+.auth-brand small { color: var(--secondary); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; }
+.auth-form { display: grid; gap: 17px; }
+.auth-form h1 { font-size: 32px; margin: 8px 0 10px; }
+.auth-form p { color: var(--secondary); font-size: 13px; line-height: 1.5; }
+.auth-form .primary-action { justify-content: center; min-height: 46px; margin-top: 4px; }
+.auth-back { justify-self: start; border: 0; background: none; color: var(--secondary); cursor: pointer; padding: 0; }
+.auth-error { color: #ff8c8c !important; margin: 0; }
+.mode-picker { display: grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: 14px; background: rgba(255,255,255,.07); }
+.mode-picker button { border: 0; border-radius: 11px; padding: 10px; background: transparent; cursor: pointer; color: var(--secondary); }
+.mode-picker button.active { background: white; color: black; }
 button, input, textarea { font: inherit; }
 button { color: inherit; }
 .app-shell { min-height: 100vh; overflow: hidden; }
