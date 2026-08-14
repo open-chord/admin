@@ -1,4 +1,4 @@
-import type { Album, ArchiveImportResult, ArchivePlaylist, ImportDraft, ImportResult, Track } from "./types";
+import type { Album, ArchiveImportResult, ArchivePlaylist, ImportDraft, ImportResult, Playlist, Track } from "./types";
 
 const SERVER_URL_KEY = "openchord.serverUrl";
 
@@ -33,6 +33,19 @@ async function parse<T>(response: Response): Promise<T> {
   const body = await response.json();
   if (!response.ok) throw new Error(body.message || "Что-то пошло не так");
   return body;
+}
+
+async function graphQl<T>(query: string, variables: Record<string, unknown> = {}): Promise<T> {
+  const response = await fetch(serverResource("/graphql"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query, variables }),
+  });
+  const body = await response.json() as { data?: T; errors?: { message: string }[] };
+  if (!response.ok || body.errors?.length || !body.data) {
+    throw new Error(body.errors?.[0]?.message || `Server returned HTTP ${response.status}`);
+  }
+  return body.data;
 }
 
 /**
@@ -107,6 +120,7 @@ export async function commitAlbum(draft: ImportDraft): Promise<ImportResult> {
           number: track.number,
           durationMs: track.durationMs,
           sourceFormat: track.sourceFormat,
+          originalFilename: track.originalFilename,
         })),
       }),
     }),
@@ -133,4 +147,38 @@ export async function importOpenChordArchive(file: File): Promise<ArchiveImportR
   const body = new FormData();
   body.append("archive", file);
   return parse(await fetch(serverResource("/api/admin/openchord/import"), { method: "POST", body }));
+}
+
+const PLAYLIST_FIELDS = "id name description artworkUrl tracks { id title durationMs artistName albumTitle }";
+
+export async function fetchPlaylists(): Promise<Playlist[]> {
+  return (await graphQl<{ playlists: Playlist[] }>(`query { playlists { ${PLAYLIST_FIELDS} } }`)).playlists;
+}
+
+export async function createPlaylist(name: string): Promise<Playlist> {
+  return (await graphQl<{ createPlaylist: Playlist }>(
+    `mutation CreatePlaylist($name: String!) { createPlaylist(name: $name) { ${PLAYLIST_FIELDS} } }`,
+    { name },
+  )).createPlaylist;
+}
+
+export async function deletePlaylist(id: string): Promise<void> {
+  await graphQl<{ deletePlaylist: boolean }>(
+    "mutation DeletePlaylist($id: ID!) { deletePlaylist(id: $id) }",
+    { id },
+  );
+}
+
+export async function addTrackToPlaylist(playlistId: string, trackId: string): Promise<Playlist> {
+  return (await graphQl<{ addTrackToPlaylist: Playlist }>(
+    `mutation AddTrack($playlistId: ID!, $trackId: ID!) { addTrackToPlaylist(playlistId: $playlistId, trackId: $trackId) { ${PLAYLIST_FIELDS} } }`,
+    { playlistId, trackId },
+  )).addTrackToPlaylist;
+}
+
+export async function removeTrackFromPlaylist(playlistId: string, trackId: string): Promise<Playlist> {
+  return (await graphQl<{ removeTrackFromPlaylist: Playlist }>(
+    `mutation RemoveTrack($playlistId: ID!, $trackId: ID!) { removeTrackFromPlaylist(playlistId: $playlistId, trackId: $trackId) { ${PLAYLIST_FIELDS} } }`,
+    { playlistId, trackId },
+  )).removeTrackFromPlaylist;
 }

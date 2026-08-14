@@ -1,5 +1,5 @@
 import { Check, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getServerUrl, fetchCatalog, serverResource } from "./api";
 import type { Notice, View } from "./app/navigation";
 import { MenuBar, Sidebar, Toolbar } from "./components/AppChrome";
@@ -9,6 +9,7 @@ import { AlbumCollection, AlbumDetail, TrackCollection } from "./features/librar
 import { LyricsSheet } from "./features/lyrics/LyricsSheet";
 import { SettingsSheet } from "./features/settings/SettingsSheet";
 import { ArchiveView } from "./features/archive/ArchiveView";
+import { PlaylistsView } from "./features/playlists/PlaylistsView";
 import type { Album, Track } from "./types";
 
 function App() {
@@ -90,6 +91,7 @@ function App() {
   };
 
   const closeWorkflow = () => navigate(selectedAlbum ? "album" : "albums");
+  const showError = useCallback((text: string) => setNotice({ text, error: true }), []);
 
   return (
     <div className="app-shell">
@@ -143,6 +145,7 @@ function App() {
         {(view === "tracks" || view === "lyrics") && (
           <TrackCollection albums={visibleAlbums} lyricsOnly={view === "lyrics"} onEdit={setEditing} />
         )}
+        {view === "playlists" && <PlaylistsView albums={albums} onError={showError} />}
         {view === "archive" && (
           <ArchiveView
             onImported={async (result) => {
