@@ -235,6 +235,22 @@ h3 { font-size: 23px; letter-spacing: -.035em; margin: 7px 0 0; }
 .archive-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .archive-grid .upload-card { padding: 22px; display: grid; grid-template-columns: auto 1fr; gap: 16px 18px; align-content: start; }
 .archive-grid .upload-card h2 { margin: 5px 0 8px; }
+
+.playlist-page { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 18px; min-height: calc(100vh - 150px); }
+.playlist-list, .playlist-detail { border: 1px solid var(--line); border-radius: 22px; padding: 18px; }
+.playlist-list form, .playlist-add { display: flex; gap: 8px; margin-bottom: 16px; }
+.playlist-list input, .playlist-add select { min-width: 0; flex: 1; border: 1px solid var(--line); border-radius: 11px; background: rgba(255,255,255,.06); color: inherit; padding: 10px 12px; }
+.playlist-list form button, .playlist-add button { border: 0; border-radius: 11px; padding: 0 12px; background: var(--accent); color: #111; display: inline-flex; align-items: center; gap: 6px; }
+.playlist-list form button:disabled, .playlist-add button:disabled { opacity: .4; }
+.playlist-list > button { width: 100%; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; padding: 10px; color: inherit; background: transparent; text-align: left; }
+.playlist-list > button.active { background: rgba(255,255,255,.1); }
+.playlist-list > button span { display: grid; gap: 2px; }
+.playlist-list small { color: var(--secondary); }
+.playlist-detail header { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.playlist-detail h1 { margin: 4px 0; font-size: 32px; }
+.playlist-detail p { margin: 0; color: var(--secondary); }
+.playlist-tracks { display: grid; gap: 3px; }
+@media (max-width: 850px) { .playlist-page { grid-template-columns: 1fr; } }
 .archive-grid .upload-card p { color: var(--secondary); font-size: 13px; line-height: 1.55; margin-bottom: 0; }
 .archive-grid .upload-card .primary-action, .archive-grid .upload-card .field { grid-column: 1 / -1; justify-self: start; }
 .archive-grid .upload-card .field { width: 100%; }

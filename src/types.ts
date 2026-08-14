@@ -71,3 +71,16 @@ export type ArchiveImportResult = {
   playlists: number;
   skippedAlbums: number;
 };
+
+export type PlaylistTrack = Pick<Track, "id" | "title" | "durationMs"> & {
+  artistName: string;
+  albumTitle: string;
+};
+
+export type Playlist = {
+  id: string;
+  name: string;
+  description: string;
+  artworkUrl: string | null;
+  tracks: PlaylistTrack[];
+};

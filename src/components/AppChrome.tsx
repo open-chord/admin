@@ -68,6 +68,7 @@ export function Sidebar({
         <span className="nav-label">Коллекция</span>
         <button className={view === "albums" || view === "album" ? "active" : ""} onClick={() => navigate("albums")}><Music2 /> <span>Альбомы</span></button>
         <button className={view === "tracks" ? "active" : ""} onClick={() => navigate("tracks")}><ListMusic /> <span>Треки</span></button>
+        <button className={view === "playlists" ? "active" : ""} onClick={() => navigate("playlists")}><ListMusic /> <span>Плейлисты</span></button>
         <button className={view === "lyrics" ? "active" : ""} onClick={() => navigate("lyrics")}><Sparkles /> <span>Lyrics</span></button>
         <button className={view === "archive" ? "active" : ""} onClick={() => navigate("archive")}><Archive /> <span>Архив</span></button>
       </nav>
@@ -104,6 +105,7 @@ export function Toolbar({
           </>
         )}
         {view === "archive" && <strong>Архив OpenChord</strong>}
+        {view === "playlists" && <strong>Плейлисты</strong>}
       </div>
       <div className="toolbar-actions">
         {collectionView && (
