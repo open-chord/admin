@@ -1,6 +1,22 @@
 import type { Album, ArchiveImportResult, ArchivePlaylist, ImportDraft, ImportResult, Playlist, Track } from "./types";
 
 const SERVER_URL_KEY = "openchord.serverUrl";
+const ACCESS_TOKEN_KEY = "openchord.accessToken";
+
+export function setAccessToken(token: string | null): void {
+  if (token) window.localStorage.setItem(ACCESS_TOKEN_KEY, token);
+  else window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+}
+
+export function hasAccessToken(): boolean { return Boolean(window.localStorage.getItem(ACCESS_TOKEN_KEY)); }
+
+export async function authorizedFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+  const token = window.localStorage.getItem(ACCESS_TOKEN_KEY);
+  if (!token && Object.keys(init).length === 0) return fetch(input);
+  const headers = new Headers(init.headers);
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  return fetch(input, { ...init, headers });
+}
 
 function normalizeServerUrl(value: string): string {
   const candidate = value.trim() || window.location.origin;
@@ -20,7 +36,12 @@ export function setServerUrl(value: string): string {
 }
 
 export function serverResource(path: string): string {
-  return `${getServerUrl()}${path.startsWith("/") ? path : `/${path}`}`;
+  const resource = `${getServerUrl()}${path.startsWith("/") ? path : `/${path}`}`;
+  const token = window.localStorage.getItem(ACCESS_TOKEN_KEY);
+  if (!token || !path.startsWith("/media/")) return resource;
+  const url = new URL(resource);
+  url.searchParams.set("access_token", token);
+  return url.toString();
 }
 
 export async function testServerConnection(url: string): Promise<void> {
@@ -36,7 +57,7 @@ async function parse<T>(response: Response): Promise<T> {
 }
 
 async function graphQl<T>(query: string, variables: Record<string, unknown> = {}): Promise<T> {
-  const response = await fetch(serverResource("/graphql"), {
+  const response = await authorizedFetch(serverResource("/graphql"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ query, variables }),
@@ -55,7 +76,7 @@ async function graphQl<T>(query: string, variables: Record<string, unknown> = {}
  * @throws {Error} When the server rejects the request or returns its error envelope.
  */
 export async function fetchCatalog(): Promise<Album[]> {
-  return parse(await fetch(serverResource("/api/admin/catalog")));
+  return parse(await authorizedFetch(serverResource("/api/admin/catalog")));
 }
 
 /**
@@ -65,7 +86,7 @@ export async function fetchCatalog(): Promise<Album[]> {
  * @returns The track created by the server.
  */
 export async function uploadTrack(form: FormData): Promise<Track> {
-  return parse(await fetch(serverResource("/api/admin/tracks"), { method: "POST", body: form }));
+  return parse(await authorizedFetch(serverResource("/api/admin/tracks"), { method: "POST", body: form }));
 }
 
 /**
@@ -77,7 +98,7 @@ export async function uploadTrack(form: FormData): Promise<Track> {
  */
 export async function updateLyrics(id: string, lyrics: string): Promise<Track> {
   return parse(
-    await fetch(serverResource(`/api/admin/tracks/${id}/lyrics`), {
+    await authorizedFetch(serverResource(`/api/admin/tracks/${id}/lyrics`), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ lyrics }),
@@ -94,7 +115,7 @@ export async function updateLyrics(id: string, lyrics: string): Promise<Track> {
 export async function analyzeAlbum(files: File[]): Promise<ImportDraft> {
   const body = new FormData();
   files.forEach((file) => body.append("files", file));
-  return parse(await fetch(serverResource("/api/admin/imports/analyze"), { method: "POST", body }));
+  return parse(await authorizedFetch(serverResource("/api/admin/imports/analyze"), { method: "POST", body }));
 }
 
 /**
@@ -105,7 +126,7 @@ export async function analyzeAlbum(files: File[]): Promise<ImportDraft> {
  */
 export async function commitAlbum(draft: ImportDraft): Promise<ImportResult> {
   return parse(
-    await fetch(serverResource(`/api/admin/imports/${draft.id}/commit`), {
+    await authorizedFetch(serverResource(`/api/admin/imports/${draft.id}/commit`), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -128,25 +149,28 @@ export async function commitAlbum(draft: ImportDraft): Promise<ImportResult> {
 }
 
 export async function fetchArchivePlaylists(): Promise<ArchivePlaylist[]> {
-  return parse(await fetch(serverResource("/api/admin/openchord/playlists")));
+  return parse(await authorizedFetch(serverResource("/api/admin/openchord/playlists")));
 }
 
-export function downloadOpenChordArchive(playlistId?: string): void {
+export async function downloadOpenChordArchive(playlistId?: string): Promise<void> {
   const query = playlistId
     ? `scope=playlist&playlistId=${encodeURIComponent(playlistId)}`
     : "scope=library";
+  const response = await authorizedFetch(serverResource(`/api/admin/openchord/export?${query}`));
+  if (!response.ok) throw new Error(`Server returned HTTP ${response.status}`);
   const link = document.createElement("a");
-  link.href = serverResource(`/api/admin/openchord/export?${query}`);
+  link.href = URL.createObjectURL(await response.blob());
   link.download = "";
   document.body.append(link);
   link.click();
   link.remove();
+  URL.revokeObjectURL(link.href);
 }
 
 export async function importOpenChordArchive(file: File): Promise<ArchiveImportResult> {
   const body = new FormData();
   body.append("archive", file);
-  return parse(await fetch(serverResource("/api/admin/openchord/import"), { method: "POST", body }));
+  return parse(await authorizedFetch(serverResource("/api/admin/openchord/import"), { method: "POST", body }));
 }
 
 const PLAYLIST_FIELDS = "id name description artworkUrl tracks { id title durationMs artistName albumTitle }";
