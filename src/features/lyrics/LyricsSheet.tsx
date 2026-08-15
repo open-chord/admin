@@ -113,7 +113,9 @@ export function LyricsSheet({
 
   const sourceDirty = source !== savedSource;
   const reviewReady = status === "NEEDS_REVIEW" || status === "SYNCED";
-  const activeStep = !source.trim() ? 1 : reviewReady ? 3 : 2;
+  const currentStep = sourceDirty || status === "EMPTY" ? 1 : reviewReady ? 3 : 2;
+  const completedStep = sourceDirty ? 0 : status === "SYNCED" ? 3 : status === "NEEDS_REVIEW" ? 2 : status === "UNSYNCED" || status === "PROCESSING" || status === "FAILED" ? 1 : 0;
+  const stepClass = (step: number) => step <= completedStep ? "completed" : step === currentStep ? "current" : "";
 
   return (
     <div className="sheet-backdrop" onMouseDown={onClose}>
@@ -126,10 +128,14 @@ export function LyricsSheet({
           {averageConfidence !== null && <p>Уверенность модели: {Math.round(averageConfidence * 100)}%</p>}
         </div>
         <ol className="lyrics-steps" aria-label="Этапы синхронизации">
-          <li className={activeStep >= 1 ? "active" : ""}><b>1</b><span><strong>Текст</strong><small>Добавьте или проверьте слова</small></span></li>
-          <li className={activeStep >= 2 ? "active" : ""}><b>2</b><span><strong>Синхронизация</strong><small>Получите автоматические таймкоды</small></span></li>
-          <li className={activeStep >= 3 ? "active" : ""}><b>3</b><span><strong>Публикация</strong><small>Проверьте результат и сохраните</small></span></li>
+          <li className={stepClass(1)}><b>1</b><span><strong>Текст</strong><small>Добавьте или проверьте слова</small></span></li>
+          <li className={`${stepClass(2)} ${status === "PROCESSING" ? "processing" : ""}`}><b>2</b><span><strong>Синхронизация</strong><small>{status === "PROCESSING" ? "Распознаём вокал и сопоставляем строки" : "Получите автоматические таймкоды"}</small></span></li>
+          <li className={stepClass(3)}><b>3</b><span><strong>Публикация</strong><small>Проверьте результат и сохраните</small></span></li>
         </ol>
+        {status === "PROCESSING" && <div className="lyrics-progress" role="progressbar" aria-label="Синхронизация lyrics выполняется">
+          <span><i /></span>
+          <p><Sparkles /> Анализируем трек — можно оставить окно открытым</p>
+        </div>}
         {loading ? <p>Загружаю lyrics…</p> : <div className="lyrics-editor-grid">
           <div className="lyrics-editor-field">
             <label htmlFor="lyrics-source"><FileText /> Исходный текст</label>

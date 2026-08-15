@@ -47,6 +47,8 @@ it("saves a changed source automatically before starting alignment", async () =>
   expect(await screen.findByLabelText("Синхронизированный LRC")).toHaveValue("[00:01.250] First line");
   await user.clear(screen.getByLabelText("Исходный текст"));
   await user.type(screen.getByLabelText("Исходный текст"), "Changed line");
+  const synchronizationStep = screen.getByRole("list", { name: "Этапы синхронизации" }).children[1];
+  expect(synchronizationStep).not.toHaveClass("current");
   await user.click(screen.getByRole("button", { name: "Сохранить и синхронизировать" }));
 
   expect(fetchMock).toHaveBeenNthCalledWith(2,
@@ -59,4 +61,6 @@ it("saves a changed source automatically before starting alignment", async () =>
     expect.objectContaining({ method: "POST" }),
   );
   expect(screen.getByText("Синхронизация выполняется")).toBeInTheDocument();
+  expect(screen.getByRole("progressbar", { name: "Синхронизация lyrics выполняется" })).toBeInTheDocument();
+  expect(synchronizationStep).toHaveClass("current");
 });
