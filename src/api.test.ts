@@ -3,13 +3,18 @@ import {
   fetchArchivePlaylists,
   fetchCatalog,
   getServerUrl,
+  hasAccessToken,
   importOpenChordArchive,
   serverResource,
+  setAccessToken,
+  setAuthTokens,
   setServerUrl,
   testServerConnection,
 } from "./api";
 
 afterEach(() => {
+  setAccessToken(null);
+  window.localStorage.removeItem("openchord.serverUrl");
   vi.unstubAllGlobals();
 });
 
@@ -74,5 +79,47 @@ describe("admin API", () => {
       "https://music.example/api/admin/openchord/import",
       expect.objectContaining({ method: "POST", body: expect.any(FormData) }),
     );
+  });
+
+  it("refreshes an expired access token and retries the request", async () => {
+    setServerUrl("https://music.example");
+    setAuthTokens("expired-access", "valid-refresh");
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        accessToken: "fresh-access",
+        refreshToken: "fresh-refresh",
+      }), { status: 200, headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify([]), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(fetchCatalog()).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "https://music.example/api/auth/refresh", expect.objectContaining({
+      method: "POST",
+      body: JSON.stringify({ refreshToken: "valid-refresh" }),
+    }));
+    expect(fetchMock).toHaveBeenNthCalledWith(3, "https://music.example/api/admin/catalog", expect.objectContaining({
+      headers: expect.any(Headers),
+    }));
+    const retryHeaders = (fetchMock.mock.calls[2][1] as RequestInit).headers as Headers;
+    expect(retryHeaders.get("Authorization")).toBe("Bearer fresh-access");
+  });
+
+  it("reports an empty unauthorized response without a JSON parsing error", async () => {
+    setAccessToken("expired-access");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 401 })));
+
+    await expect(fetchCatalog()).rejects.toThrow("Server returned HTTP 401");
+    expect(hasAccessToken()).toBe(false);
+  });
+
+  it("does not accept a legacy access-only session", () => {
+    setAccessToken("legacy-access");
+
+    expect(hasAccessToken()).toBe(false);
+    expect(window.localStorage.getItem("openchord.accessToken")).toBeNull();
   });
 });

@@ -186,7 +186,6 @@ function App() {
           track={editing}
           onClose={() => setEditing(null)}
           onSaved={async (track) => {
-            setEditing(null);
             await refresh();
             setNotice({ text: `Lyrics сохранены · ${track.lyricLines} строк` });
           }}
