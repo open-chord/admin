@@ -197,12 +197,21 @@ h3 { font-size: 23px; letter-spacing: -.035em; margin: 7px 0 0; }
 .workflow-sheet .import-promises > div { min-height: 74px; padding: 12px; }
 .workflow-sheet .sheet-close { z-index: 2; }
 @keyframes sheet-in { from { opacity: 0; transform: translateY(12px) scale(.985); } }
-.lyrics-sheet { width: min(640px, 100%); border-radius: 32px; padding: 34px; position: relative; }
+.lyrics-sheet { width: min(980px, 100%); border-radius: 32px; padding: 34px; position: relative; }
 .lyrics-sheet h2 { font-size: 31px; margin: 10px 0; }
 .lyrics-sheet > p { color: var(--secondary); font-size: 10px; }
 .lyrics-sheet code { color: var(--accent); }
 .lyrics-sheet textarea { width: 100%; min-height: 300px; resize: vertical; border: 1px solid var(--stroke); border-radius: 18px; background: rgba(0,0,0,.38); color: white; padding: 17px; outline: 0; line-height: 1.7; font-size: 11px; }
 .lyrics-sheet footer { display: flex; justify-content: flex-end; gap: 9px; margin-top: 18px; }
+.lyrics-editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.lyrics-editor-field { display: grid; gap: 9px; min-width: 0; }
+.lyrics-editor-field > span { display: flex; align-items: center; gap: 7px; color: var(--secondary); font-size: 11px; font-weight: 700; }
+.lyrics-editor-field > span svg, .lyrics-editor-field > button svg { width: 14px; height: 14px; }
+.lyrics-editor-field textarea { min-height: 260px; }
+.lyrics-editor-field > button { justify-self: end; }
+.lyrics-status { display: inline-flex; width: fit-content; padding: 5px 9px; border-radius: 999px; background: rgba(255,255,255,.08); }
+.lyrics-status-synced { color: var(--accent) !important; }
+.lyrics-status-unsynced { color: #f3c76b !important; }
 .sheet-close { position: absolute; top: 20px; right: 20px; width: 34px; height: 34px; border: 0; border-radius: 50%; background: rgba(255,255,255,.09); display: grid; place-items: center; cursor: pointer; }
 .sheet-close svg { width: 15px; }
 .notice { position: fixed; right: 25px; bottom: 25px; z-index: 80; border-radius: 16px; padding: 13px 17px; display: flex; align-items: center; gap: 8px; font-size: 10px; animation: notice-in .3s; }
@@ -310,6 +319,7 @@ h3 { font-size: 23px; letter-spacing: -.035em; margin: 7px 0 0; }
   .upload-symbol { display: none; }
   .field-pair { grid-template-columns: 1fr; }
   .lyrics-sheet { padding: 27px 20px 20px; border-radius: 26px; }
+  .lyrics-editor-grid { grid-template-columns: 1fr; }
   .import-intro, .review-head { padding: 24px 20px; }
   .album-drop { margin: 20px; width: calc(100% - 40px); min-height: 200px; }
   .import-promises { padding: 0 20px 20px; grid-template-columns: 1fr; }

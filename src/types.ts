@@ -8,6 +8,21 @@ export type Track = {
   lyricLines: number;
 };
 
+export type LyricsStatus = "EMPTY" | "UNSYNCED" | "SYNCED";
+
+export type LyricLine = {
+  id: string;
+  text: string;
+  startMs: number;
+  endMs: number;
+};
+
+export type LyricsDocument = {
+  sourceText: string;
+  status: LyricsStatus;
+  lines: LyricLine[];
+};
+
 /** Album projection used by the Studio library. */
 export type Album = {
   id: string;

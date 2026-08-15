@@ -1,4 +1,4 @@
-import type { Album, ArchiveImportResult, ArchivePlaylist, ImportDraft, ImportResult, Playlist, Track } from "./types";
+import type { Album, ArchiveImportResult, ArchivePlaylist, ImportDraft, ImportResult, LyricsDocument, Playlist, Track } from "./types";
 
 const SERVER_URL_KEY = "openchord.serverUrl";
 const ACCESS_TOKEN_KEY = "openchord.accessToken";
@@ -102,6 +102,22 @@ export async function updateLyrics(id: string, lyrics: string): Promise<Track> {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ lyrics }),
+    }),
+  );
+}
+
+/** Loads the editable source and synchronized intervals for a track. */
+export async function fetchLyrics(id: string): Promise<LyricsDocument> {
+  return parse(await authorizedFetch(serverResource(`/api/admin/tracks/${id}/lyrics`)));
+}
+
+/** Stores unsynchronized source text and invalidates timings derived from an older source. */
+export async function updateLyricsSource(id: string, sourceText: string): Promise<LyricsDocument> {
+  return parse(
+    await authorizedFetch(serverResource(`/api/admin/tracks/${id}/lyrics/source`), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sourceText }),
     }),
   );
 }
