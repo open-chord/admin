@@ -8,18 +8,23 @@ export type Track = {
   lyricLines: number;
 };
 
-export type LyricsStatus = "EMPTY" | "UNSYNCED" | "SYNCED";
+export type LyricsStatus = "EMPTY" | "UNSYNCED" | "PROCESSING" | "NEEDS_REVIEW" | "FAILED" | "SYNCED";
 
 export type LyricLine = {
   id: string;
   text: string;
   startMs: number;
   endMs: number;
+  confidence: number | null;
 };
 
 export type LyricsDocument = {
   sourceText: string;
   status: LyricsStatus;
+  alignmentAvailable: boolean;
+  alignmentEngine: string | null;
+  alignmentError: string | null;
+  averageConfidence: number | null;
   lines: LyricLine[];
 };
 

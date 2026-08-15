@@ -10,11 +10,28 @@ it("loads existing lyrics and saves a replacement source", async () => {
     .mockResolvedValueOnce(new Response(JSON.stringify({
       sourceText: "First line\nSecond line",
       status: "SYNCED",
-      lines: [{ id: "line-1", text: "First line", startMs: 1250, endMs: 4500 }],
+      alignmentAvailable: true,
+      alignmentEngine: null,
+      alignmentError: null,
+      averageConfidence: null,
+      lines: [{ id: "line-1", text: "First line", startMs: 1250, endMs: 4500, confidence: null }],
     }), { status: 200, headers: { "Content-Type": "application/json" } }))
     .mockResolvedValueOnce(new Response(JSON.stringify({
       sourceText: "Changed line",
       status: "UNSYNCED",
+      alignmentAvailable: true,
+      alignmentEngine: null,
+      alignmentError: null,
+      averageConfidence: null,
+      lines: [],
+    }), { status: 200, headers: { "Content-Type": "application/json" } }))
+    .mockResolvedValueOnce(new Response(JSON.stringify({
+      sourceText: "Changed line",
+      status: "PROCESSING",
+      alignmentAvailable: true,
+      alignmentEngine: null,
+      alignmentError: null,
+      averageConfidence: null,
       lines: [],
     }), { status: 200, headers: { "Content-Type": "application/json" } }));
   vi.stubGlobal("fetch", fetchMock);
@@ -38,4 +55,11 @@ it("loads existing lyrics and saves a replacement source", async () => {
   );
   expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ lyricLines: 0 }));
   expect(screen.getByText("Ожидает синхронизации")).toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "Синхронизировать автоматически" }));
+  expect(fetchMock).toHaveBeenLastCalledWith(
+    expect.stringContaining("/api/admin/tracks/track-1/lyrics/alignment"),
+    expect.objectContaining({ method: "POST" }),
+  );
+  expect(screen.getByText("Синхронизация выполняется")).toBeInTheDocument();
 });

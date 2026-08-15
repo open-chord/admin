@@ -122,6 +122,15 @@ export async function updateLyricsSource(id: string, sourceText: string): Promis
   );
 }
 
+/** Queues local speech recognition and forced alignment for the stored source text. */
+export async function startLyricsAlignment(id: string): Promise<LyricsDocument> {
+  return parse(
+    await authorizedFetch(serverResource(`/api/admin/tracks/${id}/lyrics/alignment`), {
+      method: "POST",
+    }),
+  );
+}
+
 /**
  * Stages a folder selection and detects metadata without changing the catalog.
  *

@@ -1,7 +1,7 @@
-import { Check, FileText, TimerReset, X } from "lucide-react";
+import { Check, FileText, Sparkles, TimerReset, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { fetchLyrics, updateLyrics, updateLyricsSource } from "../../api";
-import type { LyricLine, LyricsStatus, Track } from "../../types";
+import { fetchLyrics, startLyricsAlignment, updateLyrics, updateLyricsSource } from "../../api";
+import type { LyricLine, LyricsDocument, LyricsStatus, Track } from "../../types";
 
 function linesAsLrc(lines: LyricLine[]): string {
   return lines.map((line) => {
@@ -15,6 +15,9 @@ function linesAsLrc(lines: LyricLine[]): string {
 const statusLabel: Record<LyricsStatus, string> = {
   EMPTY: "Нет текста",
   UNSYNCED: "Ожидает синхронизации",
+  PROCESSING: "Синхронизация выполняется",
+  NEEDS_REVIEW: "Нужно проверить",
+  FAILED: "Ошибка синхронизации",
   SYNCED: "Синхронизировано",
 };
 
@@ -33,15 +36,24 @@ export function LyricsSheet({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<"source" | "lrc" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [alignmentAvailable, setAlignmentAvailable] = useState(false);
+  const [averageConfidence, setAverageConfidence] = useState<number | null>(null);
+
+  const applyDocument = (document: LyricsDocument) => {
+    setSource(document.sourceText);
+    setLrc(linesAsLrc(document.lines));
+    setStatus(document.status);
+    setAlignmentAvailable(document.alignmentAvailable);
+    setAverageConfidence(document.averageConfidence);
+    setError(document.alignmentError);
+  };
 
   useEffect(() => {
     let cancelled = false;
     void fetchLyrics(track.id)
       .then((document) => {
         if (cancelled) return;
-        setSource(document.sourceText);
-        setLrc(linesAsLrc(document.lines));
-        setStatus(document.status);
+        applyDocument(document);
       })
       .catch((reason: unknown) => {
         if (!cancelled) setError(reason instanceof Error ? reason.message : "Не удалось загрузить lyrics");
@@ -52,18 +64,41 @@ export function LyricsSheet({
     return () => { cancelled = true; };
   }, [track.id]);
 
+  useEffect(() => {
+    if (status !== "PROCESSING") return;
+    const timer = window.setInterval(() => {
+      void fetchLyrics(track.id).then((document) => {
+        applyDocument(document);
+        if (document.status !== "PROCESSING") {
+          onSaved({ ...track, lyricLines: document.lines.length });
+        }
+      }).catch((reason: unknown) => {
+        setError(reason instanceof Error ? reason.message : "Не удалось проверить статус синхронизации");
+      });
+    }, 1500);
+    return () => window.clearInterval(timer);
+  }, [status, track, onSaved]);
+
   const saveSource = async () => {
     setSaving("source");
     setError(null);
     try {
       const document = await updateLyricsSource(track.id, source);
-      setStatus(document.status);
-      setLrc("");
+      applyDocument(document);
       onSaved({ ...track, lyricLines: 0 });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Не удалось сохранить исходный текст");
     } finally {
       setSaving(null);
+    }
+  };
+
+  const align = async () => {
+    setError(null);
+    try {
+      applyDocument(await startLyricsAlignment(track.id));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Не удалось запустить синхронизацию");
     }
   };
 
@@ -88,11 +123,20 @@ export function LyricsSheet({
         <span className="overline">Синхронизация</span>
         <h2>{track.title}</h2>
         <p className={`lyrics-status lyrics-status-${status.toLowerCase()}`}>{statusLabel[status]}</p>
+        {averageConfidence !== null && <p>Уверенность модели: {Math.round(averageConfidence * 100)}%</p>}
         {loading ? <p>Загружаю lyrics…</p> : <div className="lyrics-editor-grid">
           <label className="lyrics-editor-field">
             <span><FileText /> Исходный текст</span>
             <textarea aria-label="Исходный текст" value={source} onChange={(event) => setSource(event.target.value)} placeholder={"Первая строка\nСледующая строка"} />
             <button className="glass-button" onClick={() => void saveSource()} disabled={saving !== null}><Check /> {saving === "source" ? "Сохраняю…" : "Сохранить исходник"}</button>
+            <button
+              className="glass-button primary-action"
+              onClick={() => void align()}
+              disabled={!alignmentAvailable || !source.trim() || status === "PROCESSING" || saving !== null}
+              title={alignmentAvailable ? "Распознать вокал и сопоставить строки" : "Alignment engine не настроен на сервере"}
+            >
+              <Sparkles /> {status === "PROCESSING" ? "Синхронизирую…" : "Синхронизировать автоматически"}
+            </button>
           </label>
           <label className="lyrics-editor-field">
             <span><TimerReset /> Синхронизированный LRC</span>
