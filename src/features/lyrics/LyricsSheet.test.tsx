@@ -5,7 +5,7 @@ import { LyricsSheet } from "./LyricsSheet";
 
 afterEach(() => vi.unstubAllGlobals());
 
-it("loads existing lyrics and saves a replacement source", async () => {
+it("saves a changed source automatically before starting alignment", async () => {
   const fetchMock = vi.fn()
     .mockResolvedValueOnce(new Response(JSON.stringify({
       sourceText: "First line\nSecond line",
@@ -47,16 +47,13 @@ it("loads existing lyrics and saves a replacement source", async () => {
   expect(await screen.findByLabelText("Синхронизированный LRC")).toHaveValue("[00:01.250] First line");
   await user.clear(screen.getByLabelText("Исходный текст"));
   await user.type(screen.getByLabelText("Исходный текст"), "Changed line");
-  await user.click(screen.getByRole("button", { name: "Сохранить исходник" }));
+  await user.click(screen.getByRole("button", { name: "Сохранить и синхронизировать" }));
 
-  expect(fetchMock).toHaveBeenLastCalledWith(
+  expect(fetchMock).toHaveBeenNthCalledWith(2,
     expect.stringContaining("/api/admin/tracks/track-1/lyrics/source"),
     expect.objectContaining({ method: "PUT", body: JSON.stringify({ sourceText: "Changed line" }) }),
   );
   expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ lyricLines: 0 }));
-  expect(screen.getByText("Ожидает синхронизации")).toBeInTheDocument();
-
-  await user.click(screen.getByRole("button", { name: "Синхронизировать автоматически" }));
   expect(fetchMock).toHaveBeenLastCalledWith(
     expect.stringContaining("/api/admin/tracks/track-1/lyrics/alignment"),
     expect.objectContaining({ method: "POST" }),

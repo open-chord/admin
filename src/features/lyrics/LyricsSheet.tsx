@@ -31,16 +31,18 @@ export function LyricsSheet({
   onSaved: (track: Track) => void;
 }) {
   const [source, setSource] = useState("");
+  const [savedSource, setSavedSource] = useState("");
   const [lrc, setLrc] = useState("");
   const [status, setStatus] = useState<LyricsStatus>("EMPTY");
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState<"source" | "lrc" | null>(null);
+  const [saving, setSaving] = useState<"align" | "lrc" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [alignmentAvailable, setAlignmentAvailable] = useState(false);
   const [averageConfidence, setAverageConfidence] = useState<number | null>(null);
 
   const applyDocument = (document: LyricsDocument) => {
     setSource(document.sourceText);
+    setSavedSource(document.sourceText);
     setLrc(linesAsLrc(document.lines));
     setStatus(document.status);
     setAlignmentAvailable(document.alignmentAvailable);
@@ -79,26 +81,19 @@ export function LyricsSheet({
     return () => window.clearInterval(timer);
   }, [status, track, onSaved]);
 
-  const saveSource = async () => {
-    setSaving("source");
-    setError(null);
-    try {
-      const document = await updateLyricsSource(track.id, source);
-      applyDocument(document);
-      onSaved({ ...track, lyricLines: 0 });
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Не удалось сохранить исходный текст");
-    } finally {
-      setSaving(null);
-    }
-  };
-
   const align = async () => {
+    setSaving("align");
     setError(null);
     try {
+      if (source !== savedSource) {
+        applyDocument(await updateLyricsSource(track.id, source));
+        onSaved({ ...track, lyricLines: 0 });
+      }
       applyDocument(await startLyricsAlignment(track.id));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Не удалось запустить синхронизацию");
+    } finally {
+      setSaving(null);
     }
   };
 
@@ -116,36 +111,54 @@ export function LyricsSheet({
     }
   };
 
+  const sourceDirty = source !== savedSource;
+  const reviewReady = status === "NEEDS_REVIEW" || status === "SYNCED";
+  const activeStep = !source.trim() ? 1 : reviewReady ? 3 : 2;
+
   return (
     <div className="sheet-backdrop" onMouseDown={onClose}>
       <section className="lyrics-sheet glass" onMouseDown={(event) => event.stopPropagation()}>
         <button className="sheet-close" onClick={onClose} aria-label="Закрыть"><X /></button>
         <span className="overline">Синхронизация</span>
         <h2>{track.title}</h2>
-        <p className={`lyrics-status lyrics-status-${status.toLowerCase()}`}>{statusLabel[status]}</p>
-        {averageConfidence !== null && <p>Уверенность модели: {Math.round(averageConfidence * 100)}%</p>}
+        <div className="lyrics-summary">
+          <p className={`lyrics-status lyrics-status-${status.toLowerCase()}`}>{statusLabel[status]}</p>
+          {averageConfidence !== null && <p>Уверенность модели: {Math.round(averageConfidence * 100)}%</p>}
+        </div>
+        <ol className="lyrics-steps" aria-label="Этапы синхронизации">
+          <li className={activeStep >= 1 ? "active" : ""}><b>1</b><span><strong>Текст</strong><small>Добавьте или проверьте слова</small></span></li>
+          <li className={activeStep >= 2 ? "active" : ""}><b>2</b><span><strong>Синхронизация</strong><small>Получите автоматические таймкоды</small></span></li>
+          <li className={activeStep >= 3 ? "active" : ""}><b>3</b><span><strong>Публикация</strong><small>Проверьте результат и сохраните</small></span></li>
+        </ol>
         {loading ? <p>Загружаю lyrics…</p> : <div className="lyrics-editor-grid">
-          <label className="lyrics-editor-field">
-            <span><FileText /> Исходный текст</span>
-            <textarea aria-label="Исходный текст" value={source} onChange={(event) => setSource(event.target.value)} placeholder={"Первая строка\nСледующая строка"} />
-            <button className="glass-button" onClick={() => void saveSource()} disabled={saving !== null}><Check /> {saving === "source" ? "Сохраняю…" : "Сохранить исходник"}</button>
-            <button
-              className="glass-button primary-action"
-              onClick={() => void align()}
-              disabled={!alignmentAvailable || !source.trim() || status === "PROCESSING" || saving !== null}
-              title={alignmentAvailable ? "Распознать вокал и сопоставить строки" : "Alignment engine не настроен на сервере"}
-            >
-              <Sparkles /> {status === "PROCESSING" ? "Синхронизирую…" : "Синхронизировать автоматически"}
-            </button>
-          </label>
-          <label className="lyrics-editor-field">
-            <span><TimerReset /> Синхронизированный LRC</span>
-            <textarea aria-label="Синхронизированный LRC" value={lrc} onChange={(event) => setLrc(event.target.value)} placeholder={"[00:12.400] Первая строка\n[00:17.820] Следующая строка"} />
-            <button className="glass-button primary-action" onClick={() => void saveLrc()} disabled={saving !== null}><Check /> {saving === "lrc" ? "Сохраняю…" : "Сохранить таймкоды"}</button>
-          </label>
+          <div className="lyrics-editor-field">
+            <label htmlFor="lyrics-source"><FileText /> Исходный текст</label>
+            <p>Это оригинал. При запуске синхронизации изменения сохранятся автоматически.</p>
+            <textarea id="lyrics-source" aria-label="Исходный текст" value={source} onChange={(event) => setSource(event.target.value)} placeholder={"Первая строка\nСледующая строка"} />
+          </div>
+          <div className="lyrics-editor-field">
+            <label htmlFor="lyrics-lrc"><TimerReset /> Результат с таймкодами</label>
+            <p>{reviewReady ? "Проверьте строки и поправьте таймкоды перед публикацией." : "Здесь появится результат автоматической синхронизации."}</p>
+            <textarea id="lyrics-lrc" aria-label="Синхронизированный LRC" value={lrc} onChange={(event) => setLrc(event.target.value)} placeholder={"[00:12.400] Первая строка\n[00:17.820] Следующая строка"} />
+          </div>
         </div>}
         {error && <p role="alert" className="form-error">{error}</p>}
-        <footer><button className="glass-button" onClick={onClose}>Закрыть</button></footer>
+        <footer className="lyrics-footer">
+          <button className="glass-button" onClick={onClose}>Закрыть</button>
+          <div>
+            <button
+              className="glass-button"
+              onClick={() => void align()}
+              disabled={!alignmentAvailable || !source.trim() || status === "PROCESSING" || saving !== null}
+              title={alignmentAvailable ? "Сохранить текст и построить таймкоды" : "Alignment engine не настроен на сервере"}
+            >
+              <Sparkles /> {status === "PROCESSING" || saving === "align" ? "Синхронизирую…" : sourceDirty ? "Сохранить и синхронизировать" : reviewReady ? "Синхронизировать заново" : "Синхронизировать"}
+            </button>
+            <button className="glass-button primary-action" onClick={() => void saveLrc()} disabled={!lrc.trim() || saving !== null || status === "PROCESSING"}>
+              <Check /> {saving === "lrc" ? "Публикую…" : "Опубликовать lyrics"}
+            </button>
+          </div>
+        </footer>
       </section>
     </div>
   );
