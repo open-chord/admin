@@ -1,6 +1,6 @@
 import { Music2, Server } from "lucide-react";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { getServerUrl, hasAccessToken, setAccessToken, setServerUrl } from "../../api";
+import { authorizedFetch, getServerUrl, hasAccessToken, setAccessToken, setAuthTokens, setServerUrl } from "../../api";
 
 type Capabilities = { initialized: boolean; mode?: "PERSONAL" | "FAMILY"; registrationEnabled: boolean };
 type AuthPayload = { accessToken: string; refreshToken: string; user: { role: "OWNER" | "MEMBER"; displayName: string } };
@@ -18,9 +18,15 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!authenticated) return;
-    fetch(`${getServerUrl()}/api/auth/me`, { headers: { Authorization: `Bearer ${localStorage.getItem("openchord.accessToken")}` } })
+    authorizedFetch(`${getServerUrl()}/api/auth/me`)
       .then((response) => { if (!response.ok) { setAccessToken(null); setAuthenticated(false); } });
   }, [authenticated]);
+
+  useEffect(() => {
+    const handleExpiredSession = () => setAuthenticated(false);
+    window.addEventListener("openchord:auth-expired", handleExpiredSession);
+    return () => window.removeEventListener("openchord:auth-expired", handleExpiredSession);
+  }, []);
 
   if (authenticated) return children;
 
@@ -46,7 +52,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
       const body = await response.json() as AuthPayload & { message?: string };
       if (!response.ok) throw new Error(body.message || "Authentication failed");
       if (body.user.role !== "OWNER") throw new Error("Studio is available to the server owner only.");
-      setAccessToken(body.accessToken); setAuthenticated(true);
+      setAuthTokens(body.accessToken, body.refreshToken); setAuthenticated(true);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Authentication failed"); }
     finally { setWorking(false); }
   };

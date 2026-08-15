@@ -2,20 +2,62 @@ import type { Album, ArchiveImportResult, ArchivePlaylist, ImportDraft, ImportRe
 
 const SERVER_URL_KEY = "openchord.serverUrl";
 const ACCESS_TOKEN_KEY = "openchord.accessToken";
+const REFRESH_TOKEN_KEY = "openchord.refreshToken";
+
+type RefreshPayload = { accessToken: string; refreshToken: string };
+let refreshPromise: Promise<string | null> | null = null;
 
 export function setAccessToken(token: string | null): void {
   if (token) window.localStorage.setItem(ACCESS_TOKEN_KEY, token);
-  else window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+  else {
+    window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+    window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+  }
+}
+
+export function setAuthTokens(accessToken: string, refreshToken: string): void {
+  window.localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+  window.localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
 }
 
 export function hasAccessToken(): boolean { return Boolean(window.localStorage.getItem(ACCESS_TOKEN_KEY)); }
 
 export async function authorizedFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+  const request = (token: string | null) => {
+    if (!token && Object.keys(init).length === 0) return fetch(input);
+    const headers = new Headers(init.headers);
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    return fetch(input, { ...init, headers });
+  };
+
   const token = window.localStorage.getItem(ACCESS_TOKEN_KEY);
-  if (!token && Object.keys(init).length === 0) return fetch(input);
-  const headers = new Headers(init.headers);
-  if (token) headers.set("Authorization", `Bearer ${token}`);
-  return fetch(input, { ...init, headers });
+  const response = await request(token);
+  if (response.status !== 401 || !window.localStorage.getItem(REFRESH_TOKEN_KEY)) return response;
+
+  if (!refreshPromise) {
+    refreshPromise = refreshAccessToken().finally(() => { refreshPromise = null; });
+  }
+  const refreshedToken = await refreshPromise;
+  return refreshedToken ? request(refreshedToken) : response;
+}
+
+async function refreshAccessToken(): Promise<string | null> {
+  const refreshToken = window.localStorage.getItem(REFRESH_TOKEN_KEY);
+  if (!refreshToken) return null;
+
+  const response = await fetch(`${getServerUrl()}/api/auth/refresh`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken }),
+  });
+  if (!response.ok) {
+    setAccessToken(null);
+    window.dispatchEvent(new Event("openchord:auth-expired"));
+    return null;
+  }
+  const body = await response.json() as RefreshPayload;
+  setAuthTokens(body.accessToken, body.refreshToken);
+  return body.accessToken;
 }
 
 function normalizeServerUrl(value: string): string {
@@ -51,9 +93,17 @@ export async function testServerConnection(url: string): Promise<void> {
 }
 
 async function parse<T>(response: Response): Promise<T> {
-  const body = await response.json();
-  if (!response.ok) throw new Error(body.message || "Что-то пошло не так");
-  return body;
+  const text = await response.text();
+  let body: { message?: string } | T | undefined;
+  if (text) {
+    try { body = JSON.parse(text) as { message?: string } | T; }
+    catch { if (response.ok) throw new Error("Server returned an invalid JSON response"); }
+  }
+  if (!response.ok) {
+    const message = body && typeof body === "object" && "message" in body ? body.message : undefined;
+    throw new Error(message || `Server returned HTTP ${response.status}`);
+  }
+  return body as T;
 }
 
 async function graphQl<T>(query: string, variables: Record<string, unknown> = {}): Promise<T> {
