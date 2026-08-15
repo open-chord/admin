@@ -20,7 +20,13 @@ export function setAuthTokens(accessToken: string, refreshToken: string): void {
   window.localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
 }
 
-export function hasAccessToken(): boolean { return Boolean(window.localStorage.getItem(ACCESS_TOKEN_KEY)); }
+export function hasAccessToken(): boolean {
+  const hasCompleteSession = Boolean(
+    window.localStorage.getItem(ACCESS_TOKEN_KEY) && window.localStorage.getItem(REFRESH_TOKEN_KEY),
+  );
+  if (!hasCompleteSession) setAccessToken(null);
+  return hasCompleteSession;
+}
 
 export async function authorizedFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
   const request = (token: string | null) => {
@@ -32,7 +38,12 @@ export async function authorizedFetch(input: RequestInfo | URL, init: RequestIni
 
   const token = window.localStorage.getItem(ACCESS_TOKEN_KEY);
   const response = await request(token);
-  if (response.status !== 401 || !window.localStorage.getItem(REFRESH_TOKEN_KEY)) return response;
+  if (response.status !== 401) return response;
+  if (!window.localStorage.getItem(REFRESH_TOKEN_KEY)) {
+    setAccessToken(null);
+    window.dispatchEvent(new Event("openchord:auth-expired"));
+    return response;
+  }
 
   if (!refreshPromise) {
     refreshPromise = refreshAccessToken().finally(() => { refreshPromise = null; });

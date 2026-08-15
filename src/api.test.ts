@@ -3,6 +3,7 @@ import {
   fetchArchivePlaylists,
   fetchCatalog,
   getServerUrl,
+  hasAccessToken,
   importOpenChordArchive,
   serverResource,
   setAccessToken,
@@ -112,5 +113,13 @@ describe("admin API", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 401 })));
 
     await expect(fetchCatalog()).rejects.toThrow("Server returned HTTP 401");
+    expect(hasAccessToken()).toBe(false);
+  });
+
+  it("does not accept a legacy access-only session", () => {
+    setAccessToken("legacy-access");
+
+    expect(hasAccessToken()).toBe(false);
+    expect(window.localStorage.getItem("openchord.accessToken")).toBeNull();
   });
 });
